@@ -1,0 +1,25 @@
+---
+sidebarTitle: image_qa
+title: agentchat.contrib.captainagent.tools.information_retrieval.image_qa
+---
+
+### image\_qa
+
+```python
+@with_requirements(["transformers", "torch"],
+                   ["transformers", "torch", "PIL", "os"])
+def image_qa(image, question, ckpt="Salesforce/blip-vqa-base")
+```
+
+Perform question answering on an image using a pre-trained VQA model.
+
+**Arguments**:
+
+- `image` _Union[str, Image.Image]_ - The image to perform question answering on. It can be either file path to the image or a PIL Image object.
+- `question` - The question to ask about the image.
+  
+
+**Returns**:
+
+- `dict` - The generated answer text.
+

@@ -1,0 +1,29 @@
+---
+sidebarTitle: registry
+title: interop.registry
+---
+
+### register\_interoperable\_class
+
+```python
+def register_interoperable_class(
+        short_name: str) -> Callable[[InteroperableClass], InteroperableClass]
+```
+
+Register an Interoperable class in the global registry.
+
+**Returns**:
+
+  Callable[[InteroperableClass], InteroperableClass]: Decorator function
+  
+
+**Example**:
+
+    ```python
+    @register_interoperable_class("myinterop")
+    class MyInteroperability(Interoperable):
+        def convert_tool(self, tool: Any) -> Tool:
+            # implementation
+            ...
+    ```
+

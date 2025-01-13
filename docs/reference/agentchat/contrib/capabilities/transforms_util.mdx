@@ -1,0 +1,109 @@
+---
+sidebarTitle: transforms_util
+title: agentchat.contrib.capabilities.transforms_util
+---
+
+### cache\_key
+
+```python
+def cache_key(content: MessageContentType, *args: Hashable) -> str
+```
+
+Calculates the cache key for the given message content and any other hashable args.
+
+**Arguments**:
+
+- `content` _MessageContentType_ - The message content to calculate the cache key for.
+- `*args` - Any additional hashable args to include in the cache key.
+
+### cache\_content\_get
+
+```python
+def cache_content_get(cache: Optional[AbstractCache],
+                      key: str) -> Optional[tuple[MessageContentType, ...]]
+```
+
+Retrieves cachedd content from the cache.
+
+**Arguments**:
+
+- `cache` _None or AbstractCache_ - The cache to retrieve the content from. If None, the cache is ignored.
+- `key` _str_ - The key to retrieve the content from.
+
+### cache\_content\_set
+
+```python
+def cache_content_set(cache: Optional[AbstractCache], key: str,
+                      content: MessageContentType, *extra_values)
+```
+
+Sets content into the cache.
+
+**Arguments**:
+
+- `cache` _None or AbstractCache_ - The cache to set the content into. If None, the cache is ignored.
+- `key` _str_ - The key to set the content into.
+- `content` _MessageContentType_ - The message content to set into the cache.
+- `*extra_values` - Additional values to be passed to the cache.
+
+### min\_tokens\_reached
+
+```python
+def min_tokens_reached(messages: list[dict],
+                       min_tokens: Optional[int]) -> bool
+```
+
+Returns True if the total number of tokens in the messages is greater than or equal to the specified value.
+
+**Arguments**:
+
+- `messages` _List[Dict]_ - A list of messages to check.
+
+### count\_text\_tokens
+
+```python
+def count_text_tokens(content: MessageContentType) -> int
+```
+
+Calculates the number of text tokens in the given message content.
+
+**Arguments**:
+
+- `content` _MessageContentType_ - The message content to calculate the number of text tokens for.
+
+### is\_content\_right\_type
+
+```python
+def is_content_right_type(content: Any) -> bool
+```
+
+A helper function to check if the passed in content is of the right type.
+
+### is\_content\_text\_empty
+
+```python
+def is_content_text_empty(content: MessageContentType) -> bool
+```
+
+Checks if the content of the message does not contain any text.
+
+**Arguments**:
+
+- `content` _MessageContentType_ - The message content to check.
+
+### should\_transform\_message
+
+```python
+def should_transform_message(message: dict[str, Any],
+                             filter_dict: Optional[dict[str, Any]],
+                             exclude: bool) -> bool
+```
+
+Validates whether the transform should be applied according to the filter dictionary.
+
+**Arguments**:
+
+- `message` _Dict[str, Any]_ - The message to validate.
+- `filter_dict` _None or Dict[str, Any]_ - The filter dictionary to validate against. If None, the transform is always applied.
+- `exclude` _bool_ - Whether to exclude messages that match the filter dictionary.
+

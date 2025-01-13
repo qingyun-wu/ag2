@@ -1,0 +1,127 @@
+---
+sidebarTitle: docker_commandline_code_executor
+title: coding.docker_commandline_code_executor
+---
+
+## DockerCommandLineCodeExecutor
+
+```python
+class DockerCommandLineCodeExecutor(CodeExecutor)
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(image: str = "python:3-slim",
+             container_name: str | None = None,
+             timeout: int = 60,
+             work_dir: Path | str = Path(),
+             bind_dir: Path | str | None = None,
+             auto_remove: bool = True,
+             stop_container: bool = True,
+             execution_policies: dict[str, bool] | None = None)
+```
+
+(Experimental) A code executor class that executes code through
+a command line environment in a Docker container.
+
+The executor first saves each code block in a file in the working
+directory, and then executes the code file in the container.
+The executor executes the code blocks in the order they are received.
+Currently, the executor only supports Python and shell scripts.
+For Python code, use the language "python" for the code block.
+For shell scripts, use the language "bash", "shell", or "sh" for the code
+block.
+
+**Arguments**:
+
+- `image` __type_, optional_ - Docker image to use for code execution.
+  Defaults to "python:3-slim".
+- `container_name` _Optional[str], optional_ - Name of the Docker container
+  which is created. If None, will autogenerate a name. Defaults to None.
+- `timeout` _int, optional_ - The timeout for code execution. Defaults to 60.
+- `work_dir` _Union[Path, str], optional_ - The working directory for the code
+  execution. Defaults to Path(".").
+- `bind_dir` _Union[Path, str], optional_ - The directory that will be bound
+  to the code executor container. Useful for cases where you want to spawn
+  the container from within a container. Defaults to work_dir.
+- `auto_remove` _bool, optional_ - If true, will automatically remove the Docker
+  container when it is stopped. Defaults to True.
+- `stop_container` _bool, optional_ - If true, will automatically stop the
+  container when stop is called, when the context manager exits or when
+  the Python process exits with atext. Defaults to True.
+  
+
+**Raises**:
+
+- `ValueError` - On argument error, or if the container fails to start.
+
+### timeout
+
+```python
+@property
+def timeout() -> int
+```
+
+(Experimental) The timeout for code execution.
+
+### work\_dir
+
+```python
+@property
+def work_dir() -> Path
+```
+
+(Experimental) The working directory for the code execution.
+
+### bind\_dir
+
+```python
+@property
+def bind_dir() -> Path
+```
+
+(Experimental) The binding directory for the code execution container.
+
+### code\_extractor
+
+```python
+@property
+def code_extractor() -> CodeExtractor
+```
+
+(Experimental) Export a code extractor that can be used by an agent.
+
+### execute\_code\_blocks
+
+```python
+def execute_code_blocks(code_blocks: list[CodeBlock]) -> CommandLineCodeResult
+```
+
+(Experimental) Execute the code blocks and return the result.
+
+**Arguments**:
+
+- `code_blocks` _List[CodeBlock]_ - The code blocks to execute.
+  
+
+**Returns**:
+
+- `CommandlineCodeResult` - The result of the code execution.
+
+### restart
+
+```python
+def restart() -> None
+```
+
+(Experimental) Restart the code executor.
+
+### stop
+
+```python
+def stop() -> None
+```
+
+(Experimental) Stop the code executor.
+

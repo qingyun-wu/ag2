@@ -1,0 +1,95 @@
+---
+sidebarTitle: gemini
+title: oai.gemini
+---
+
+Create a OpenAI-compatible client for Gemini features.
+
+**Example**:
+
+    ```python
+    llm_config = {
+        "config_list": [
+            {
+                "api_type": "google",
+                "model": "gemini-pro",
+                "api_key": os.environ.get("GOOGLE_GEMINI_API_KEY"),
+                "safety_settings": [
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
+                ],
+                "top_p": 0.5,
+                "max_tokens": 2048,
+                "temperature": 1.0,
+                "top_k": 5,
+            }
+        ]
+    }
+
+    agent = autogen.AssistantAgent("my_agent", llm_config=llm_config)
+    ```
+  
+  Resources:
+  - https://ai.google.dev/docs
+  - https://cloud.google.com/vertex-ai/generative-ai/docs/migrate/migrate-from-azure-to-gemini
+  - https://blog.google/technology/ai/google-gemini-pro-imagen-duet-ai-update/
+  - https://ai.google.dev/api/python/google/generativeai/ChatSession
+
+## GeminiClient
+
+```python
+class GeminiClient()
+```
+
+Client for Google's Gemini API.
+
+Please visit this [page](https://github.com/microsoft/autogen/issues/2387) for the roadmap of Gemini integration
+of AutoGen.
+
+### \_\_init\_\_
+
+```python
+def __init__(**kwargs)
+```
+
+Uses either either api_key for authentication from the LLM config
+(specifying the GOOGLE_GEMINI_API_KEY environment variable also works),
+or follows the Google authentication mechanism for VertexAI in Google Cloud if no api_key is specified,
+where project_id and location can also be passed as parameters. Previously created credentials object can be provided,
+or a Service account key file can also be used. If neither a service account key file, nor the api_key are passed,
+then the default credentials will be used, which could be a personal account if the user is already authenticated in,
+like in Google Cloud Shell.
+
+**Arguments**:
+
+- `api_key` _str_ - The API key for using Gemini.
+- `credentials` _google.auth.credentials.Credentials_ - credentials to be used for authentication with vertexai.
+- `google_application_credentials` _str_ - Path to the JSON service account key file of the service account.
+  Alternatively, the GOOGLE_APPLICATION_CREDENTIALS environment variable
+  can also be set instead of using this argument.
+- `project_id` _str_ - Google Cloud project id, which is only valid in case no API key is specified.
+- `location` _str_ - Compute region to be used, like 'us-west1'.
+  This parameter is only valid in case no API key is specified.
+
+### message\_retrieval
+
+```python
+def message_retrieval(response) -> list
+```
+
+Retrieve and return a list of strings or a list of Choice.Message from the response.
+
+NOTE: if a list of Choice.Message is returned, it currently needs to contain the fields of OpenAI's ChatCompletion Message object,
+since that is expected for function or tool calling in the rest of the codebase at the moment, unless a custom agent is being used.
+
+### get\_usage
+
+```python
+@staticmethod
+def get_usage(response) -> dict
+```
+
+Return usage summary of the response using RESPONSE_USAGE_KEYS.
+

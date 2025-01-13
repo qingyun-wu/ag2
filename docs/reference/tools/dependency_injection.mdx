@@ -1,0 +1,145 @@
+---
+sidebarTitle: dependency_injection
+title: tools.dependency_injection
+---
+
+## BaseContext
+
+```python
+class BaseContext(ABC)
+```
+
+Base class for context classes.
+
+This is the base class for defining various context types that may be used
+throughout the application. It serves as a parent for specific context classes.
+
+## ChatContext
+
+```python
+class ChatContext(BaseContext)
+```
+
+ChatContext class that extends BaseContext.
+
+This class is used to represent a chat context that holds a list of messages.
+It inherits from `BaseContext` and adds the `messages` attribute.
+
+### \_\_init\_\_
+
+```python
+def __init__(agent: "ConversableAgent") -> None
+```
+
+Initializes the ChatContext with an agent.
+
+**Arguments**:
+
+- `agent` - The agent to use for retrieving chat messages.
+
+### chat\_messages
+
+```python
+@property
+def chat_messages() -> dict[Agent, list[dict[Any, Any]]]
+```
+
+The messages in the chat.
+
+**Returns**:
+
+  A dictionary of agents and their messages.
+
+### last\_message
+
+```python
+@property
+def last_message() -> Optional[dict[str, Any]]
+```
+
+The last message in the chat.
+
+**Returns**:
+
+  The last message in the chat.
+
+### Depends
+
+```python
+def Depends(x: Any) -> Any
+```
+
+Creates a dependency for injection based on the provided context or type.
+
+**Arguments**:
+
+- `x` - The context or dependency to be injected.
+  
+
+**Returns**:
+
+  A FastDepends object that will resolve the dependency for injection.
+
+### get\_context\_params
+
+```python
+def get_context_params(
+        func: Callable[..., Any],
+        subclass: Union[type[BaseContext], type[ChatContext]]) -> list[str]
+```
+
+Gets the names of the context parameters in a function signature.
+
+**Arguments**:
+
+- `func` - The function to inspect for context parameters.
+- `subclass` - The subclass to search for.
+  
+
+**Returns**:
+
+  A list of parameter names that are instances of the specified subclass.
+
+## Field
+
+```python
+class Field()
+```
+
+Represents a description field for use in type annotations.
+
+This class is used to store a description for an annotated field, often used for
+documenting or validating fields in a context or data model.
+
+### \_\_init\_\_
+
+```python
+def __init__(description: str) -> None
+```
+
+Initializes the Field with a description.
+
+**Arguments**:
+
+- `description` - The description text for the field.
+
+### inject\_params
+
+```python
+def inject_params(f: Callable[..., Any]) -> Callable[..., Any]
+```
+
+Injects parameters into a function, removing injected dependencies from its signature.
+
+This function is used to modify a function by injecting dependencies and removing
+injected parameters from the function's signature.
+
+**Arguments**:
+
+- `f` - The function to modify with dependency injection.
+  
+
+**Returns**:
+
+  The modified function with injected dependencies and updated signature.
+

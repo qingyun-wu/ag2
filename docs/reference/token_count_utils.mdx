@@ -1,0 +1,61 @@
+---
+sidebarTitle: token_count_utils
+title: token_count_utils
+---
+
+### token\_left
+
+```python
+def token_left(input: Union[str, list, dict],
+               model="gpt-3.5-turbo-0613") -> int
+```
+
+Count number of tokens left for an OpenAI model.
+
+**Arguments**:
+
+- `input` - (str, list, dict): Input to the model.
+- `model` - (str): Model name.
+  
+
+**Returns**:
+
+- `int` - Number of tokens left that the model can use for completion.
+
+### count\_token
+
+```python
+def count_token(input: Union[str, list, dict],
+                model: str = "gpt-3.5-turbo-0613") -> int
+```
+
+Count number of tokens used by an OpenAI model.
+
+**Arguments**:
+
+- `input` - (str, list, dict): Input to the model.
+- `model` - (str): Model name.
+  
+
+**Returns**:
+
+- `int` - Number of tokens from the input.
+
+### num\_tokens\_from\_functions
+
+```python
+def num_tokens_from_functions(functions, model="gpt-3.5-turbo-0613") -> int
+```
+
+Return the number of tokens used by a list of functions.
+
+**Arguments**:
+
+- `functions` - (list): List of function descriptions that will be passed in model.
+- `model` - (str): Model name.
+  
+
+**Returns**:
+
+- `int` - Number of tokens from the function descriptions.
+

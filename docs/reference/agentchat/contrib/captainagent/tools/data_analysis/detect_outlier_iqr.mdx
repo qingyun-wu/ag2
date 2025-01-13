@@ -1,0 +1,23 @@
+---
+sidebarTitle: detect_outlier_iqr
+title: agentchat.contrib.captainagent.tools.data_analysis.detect_outlier_iqr
+---
+
+### detect\_outlier\_iqr
+
+```python
+def detect_outlier_iqr(csv_file: str, column_name: str)
+```
+
+Detect outliers in a specified column of a CSV file using the IQR method.
+
+**Arguments**:
+
+- `csv_file` _str_ - The path to the CSV file.
+- `column_name` _str_ - The name of the column to detect outliers in.
+  
+
+**Returns**:
+
+- `list` - A list of row indices that correspond to the outliers.
+

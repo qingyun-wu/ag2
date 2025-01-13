@@ -1,0 +1,58 @@
+---
+sidebarTitle: websocket_audio_adapter
+title: agentchat.realtime_agent.websocket_audio_adapter
+---
+
+## WebSocketAudioAdapter
+
+```python
+class WebSocketAudioAdapter(RealtimeObserver)
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(websocket: "WebSocket",
+             *,
+             logger: Optional[Logger] = None) -> None
+```
+
+Observer for handling function calls from the OpenAI Realtime API.
+
+**Arguments**:
+
+- `websocket` _WebSocket_ - The websocket connection.
+- `logger` _Logger_ - The logger for the observer.
+
+### on\_event
+
+```python
+async def on_event(event: dict[str, Any]) -> None
+```
+
+Receive events from the OpenAI Realtime API, send audio back to websocket.
+
+### handle\_speech\_started\_event
+
+```python
+async def handle_speech_started_event() -> None
+```
+
+Handle interruption when the caller's speech starts.
+
+### initialize\_session
+
+```python
+async def initialize_session() -> None
+```
+
+Control initial session with OpenAI.
+
+### run\_loop
+
+```python
+async def run_loop() -> None
+```
+
+Reads data from websocket and sends it to the RealtimeClient.
+

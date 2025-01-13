@@ -1,0 +1,35 @@
+---
+sidebarTitle: local_jupyter_server
+title: coding.jupyter.local_jupyter_server
+---
+
+## LocalJupyterServer
+
+```python
+class LocalJupyterServer(JupyterConnectable)
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(ip: str = "127.0.0.1",
+             port: int | None = None,
+             token: str | GenerateToken = GenerateToken(),
+             log_file: str = "jupyter_gateway.log",
+             log_level: str = "INFO",
+             log_max_bytes: int = 1048576,
+             log_backup_count: int = 3)
+```
+
+Runs a Jupyter Kernel Gateway server locally.
+
+**Arguments**:
+
+- `ip` _str, optional_ - IP address to bind to. Defaults to "127.0.0.1".
+- `port` _Optional[int], optional_ - Port to use, if None it automatically selects a port. Defaults to None.
+- `token` _Union[str, GenerateToken], optional_ - Token to use for Jupyter server. By default will generate a token. Using None will use no token for authentication. Defaults to GenerateToken().
+- `log_file` _str, optional_ - File for Jupyter Kernel Gateway logs. Defaults to "jupyter_gateway.log".
+- `log_level` _str, optional_ - Level for Jupyter Kernel Gateway logs. Defaults to "INFO".
+- `log_max_bytes` _int, optional_ - Max logfile size. Defaults to 1048576.
+- `log_backup_count` _int, optional_ - Number of backups for rotating log. Defaults to 3.
+

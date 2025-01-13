@@ -1,0 +1,176 @@
+---
+sidebarTitle: generate_images
+title: agentchat.contrib.capabilities.generate_images
+---
+
+## ImageGenerator
+
+```python
+class ImageGenerator(Protocol)
+```
+
+This class defines an interface for image generators.
+
+Concrete implementations of this protocol must provide a `generate_image` method that takes a string prompt as
+input and returns a PIL Image object.
+
+NOTE: Current implementation does not allow you to edit a previously existing image.
+
+### generate\_image
+
+```python
+def generate_image(prompt: str) -> Image
+```
+
+Generates an image based on the provided prompt.
+
+**Arguments**:
+
+- `prompt` - A string describing the desired image.
+  
+
+**Returns**:
+
+  A PIL Image object representing the generated image.
+  
+
+**Raises**:
+
+- `ValueError` - If the image generation fails.
+
+### cache\_key
+
+```python
+def cache_key(prompt: str) -> str
+```
+
+Generates a unique cache key for the given prompt.
+
+This key can be used to store and retrieve generated images based on the prompt.
+
+**Arguments**:
+
+- `prompt` - A string describing the desired image.
+  
+
+**Returns**:
+
+  A unique string that can be used as a cache key.
+
+## DalleImageGenerator
+
+```python
+class DalleImageGenerator()
+```
+
+Generates images using OpenAI's DALL-E models.
+
+This class provides a convenient interface for generating images based on textual prompts using OpenAI's DALL-E
+models. It allows you to specify the DALL-E model, resolution, quality, and the number of images to generate.
+
+Note: Current implementation does not allow you to edit a previously existing image.
+
+### \_\_init\_\_
+
+```python
+def __init__(llm_config: dict,
+             resolution: Literal["256x256", "512x512", "1024x1024",
+                                 "1792x1024", "1024x1792"] = "1024x1024",
+             quality: Literal["standard", "hd"] = "standard",
+             num_images: int = 1)
+```
+
+**Arguments**:
+
+- `llm_config` _dict_ - llm config, must contain a valid dalle model and OpenAI API key in config_list.
+- `resolution` _str_ - The resolution of the image you want to generate. Must be one of "256x256", "512x512", "1024x1024", "1792x1024", "1024x1792".
+- `quality` _str_ - The quality of the image you want to generate. Must be one of "standard", "hd".
+- `num_images` _int_ - The number of images to generate.
+
+## ImageGeneration
+
+```python
+class ImageGeneration(AgentCapability)
+```
+
+This capability allows a ConversableAgent to generate images based on the message received from other Agents.
+
+1. Utilizes a TextAnalyzerAgent to analyze incoming messages to identify requests for image generation and
+extract relevant details.
+2. Leverages the provided ImageGenerator (e.g., DalleImageGenerator) to create the image.
+3. Optionally caches generated images for faster retrieval in future conversations.
+
+NOTE: This capability increases the token usage of the agent, as it uses TextAnalyzerAgent to analyze every
+message received by the agent.
+
+**Example**:
+
+    ```python
+    import autogen
+    from autogen.agentchat.contrib.capabilities.image_generation import ImageGeneration
+
+    # Assuming you have llm configs configured for the LLMs you want to use and Dalle.
+    # Create the agent
+    agent = autogen.ConversableAgent(
+        name="dalle", llm_config={...}, max_consecutive_auto_reply=3, human_input_mode="NEVER"
+    )
+
+    # Create an ImageGenerator with desired settings
+    dalle_gen = generate_images.DalleImageGenerator(llm_config={...})
+
+    # Add the ImageGeneration capability to the agent
+    agent.add_capability(ImageGeneration(image_generator=dalle_gen))
+    ```
+
+### \_\_init\_\_
+
+```python
+def __init__(image_generator: ImageGenerator,
+             cache: Optional[AbstractCache] = None,
+             text_analyzer_llm_config: Optional[dict] = None,
+             text_analyzer_instructions: str = PROMPT_INSTRUCTIONS,
+             verbosity: int = 0,
+             register_reply_position: int = 2)
+```
+
+**Arguments**:
+
+- `image_generator` _ImageGenerator_ - The image generator you would like to use to generate images.
+- `cache` _None or AbstractCache_ - The cache client to use to store and retrieve generated images. If None,
+  no caching will be used.
+- `text_analyzer_llm_config` _Dict or None_ - The LLM config for the text analyzer. If None, the LLM config will
+  be retrieved from the agent you're adding the ability to.
+- `text_analyzer_instructions` _str_ - Instructions provided to the TextAnalyzerAgent used to analyze
+  incoming messages and extract the prompt for image generation. The default instructions focus on
+  summarizing the prompt. You can customize the instructions to achieve more granular control over prompt
+  extraction.
+- `Example` - 'Extract specific details from the message, like desired objects, styles, or backgrounds.'
+- `verbosity` _int_ - The verbosity level. Defaults to 0 and must be greater than or equal to 0. The text
+  analyzer llm calls will be silent if verbosity is less than 2.
+- `register_reply_position` _int_ - The position of the reply function in the agent's list of reply functions.
+  This capability registers a new reply function to handle messages with image generation requests.
+  Defaults to 2 to place it after the check termination and human reply for a ConversableAgent.
+
+### add\_to\_agent
+
+```python
+def add_to_agent(agent: ConversableAgent)
+```
+
+Adds the Image Generation capability to the specified ConversableAgent.
+
+This function performs the following modifications to the agent:
+
+1. Registers a reply function: A new reply function is registered with the agent to handle messages that
+potentially request image generation. This function analyzes the message and triggers image generation if
+necessary.
+2. Creates an Agent (TextAnalyzerAgent): This is used to analyze messages for image generation requirements.
+3. Updates System Message: The agent's system message is updated to include a message indicating the
+capability to generate images has been added.
+4. Updates Description: The agent's description is updated to reflect the addition of the Image Generation
+capability. This might be helpful in certain use cases, like group chats.
+
+**Arguments**:
+
+- `agent` _ConversableAgent_ - The ConversableAgent to add the capability to.
+

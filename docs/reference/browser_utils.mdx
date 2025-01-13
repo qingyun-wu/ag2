@@ -1,0 +1,48 @@
+---
+sidebarTitle: browser_utils
+title: browser_utils
+---
+
+## SimpleTextBrowser
+
+```python
+class SimpleTextBrowser()
+```
+
+(In preview) An extremely simple text-based web browser comparable to Lynx. Suitable for Agentic use.
+
+### address
+
+```python
+@property
+def address() -> str
+```
+
+Return the address of the current page.
+
+### viewport
+
+```python
+@property
+def viewport() -> str
+```
+
+Return the content of the current viewport.
+
+### page\_content
+
+```python
+@property
+def page_content() -> str
+```
+
+Return the full contents of the current page.
+
+### visit\_page
+
+```python
+def visit_page(path_or_uri: str) -> str
+```
+
+Update the address, visit the page, and return the content of the viewport.
+

@@ -1,0 +1,165 @@
+---
+sidebarTitle: sqlite_logger
+title: logger.sqlite_logger
+---
+
+### safe\_serialize
+
+```python
+def safe_serialize(obj: Any) -> str
+```
+
+Safely serialize an object to JSON.
+
+**Arguments**:
+
+- `obj` _Any_ - Object to serialize.
+  
+
+**Returns**:
+
+- `str` - Serialized object.
+
+## SqliteLogger
+
+```python
+class SqliteLogger(BaseLogger)
+```
+
+Sqlite logger class.
+
+### \_\_init\_\_
+
+```python
+def __init__(config: dict[str, Any])
+```
+
+Initialize the SqliteLogger.
+
+**Arguments**:
+
+- `config` _dict[str, Any]_ - Configuration for the logger.
+
+### log\_chat\_completion
+
+```python
+def log_chat_completion(invocation_id: uuid.UUID, client_id: int,
+                        wrapper_id: int, source: str | Agent,
+                        request: dict[str, float | str | list[dict[str, str]]],
+                        response: str | ChatCompletion, is_cached: int,
+                        cost: float, start_time: str) -> None
+```
+
+Log chat completion.
+
+**Arguments**:
+
+- `invocation_id` _uuid.UUID_ - Invocation ID.
+- `client_id` _int_ - Client ID.
+- `wrapper_id` _int_ - Wrapper ID.
+- `source` _str | Agent_ - Source of the chat completion.
+- `request` _dict[str, float | str | list[dict[str, str]]]_ - Request for the chat completion.
+- `response` _str | ChatCompletion_ - Response for the chat completion.
+- `is_cached` _int_ - Whether the response is cached.
+- `cost` _float_ - Cost of the chat completion.
+- `start_time` _str_ - Start time of the chat completion.
+
+### log\_new\_agent
+
+```python
+def log_new_agent(agent: ConversableAgent, init_args: dict[str, Any]) -> None
+```
+
+Log new agent.
+
+**Arguments**:
+
+- `agent` _ConversableAgent_ - Agent to log.
+- `init_args` _dict[str, Any]_ - Initialization arguments of the agent
+
+### log\_event
+
+```python
+def log_event(source: str | Agent, name: str, **kwargs: dict[str,
+                                                             Any]) -> None
+```
+
+Log event.
+
+**Arguments**:
+
+- `source` _str | Agent_ - Source of the event.
+- `name` _str_ - Name of the event.
+- `**kwargs` _dict[str, Any]_ - Additional arguments for the event.
+
+### log\_new\_wrapper
+
+```python
+def log_new_wrapper(wrapper: OpenAIWrapper,
+                    init_args: dict[str, LLMConfig | list[LLMConfig]]) -> None
+```
+
+Log new wrapper.
+
+**Arguments**:
+
+- `wrapper` _OpenAIWrapper_ - Wrapper to log.
+- `init_args` _dict[str, LLMConfig | list[LLMConfig]]_ - Initialization arguments of the wrapper
+
+### log\_function\_use
+
+```python
+def log_function_use(source: str | Agent, function: F, args: dict[str, Any],
+                     returns: Any) -> None
+```
+
+Log function use.
+
+**Arguments**:
+
+- `source` _str | Agent_ - Source of the function use.
+- `function` _F_ - Function to log.
+- `args` _dict[str, Any]_ - Arguments of the function.
+- `returns` _Any_ - Returns of the function.
+
+### log\_new\_client
+
+```python
+def log_new_client(client: (AzureOpenAI
+                            | OpenAI
+                            | CerebrasClient
+                            | GeminiClient
+                            | AnthropicClient
+                            | MistralAIClient
+                            | TogetherClient
+                            | GroqClient
+                            | CohereClient
+                            | OllamaClient
+                            | BedrockClient), wrapper: OpenAIWrapper,
+                   init_args: dict[str, Any]) -> None
+```
+
+Log new client.
+
+**Arguments**:
+
+- `client` _AzureOpenAI | OpenAI | CerebrasClient | GeminiClient | AnthropicClient | MistralAIClient | TogetherClient | GroqClient | CohereClient | OllamaClient | BedrockClient_ - Client to log.
+- `wrapper` _OpenAIWrapper_ - Wrapper of the client.
+- `init_args` _dict[str, Any]_ - Initialization arguments of the client.
+
+### stop
+
+```python
+def stop() -> None
+```
+
+Stop the logger
+
+### get\_connection
+
+```python
+def get_connection() -> None | sqlite3.Connection
+```
+
+Get connection.
+

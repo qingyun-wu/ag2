@@ -1,0 +1,117 @@
+---
+sidebarTitle: neo4j_native_graph_query_engine
+title: agentchat.contrib.graph_rag.neo4j_native_graph_query_engine
+---
+
+## Neo4jNativeGraphQueryEngine
+
+```python
+class Neo4jNativeGraphQueryEngine(GraphQueryEngine)
+```
+
+A graph query engine implemented using the Neo4j GraphRAG SDK.
+Provides functionality to initialize a knowledge graph,
+create a vector index, and query the graph using Neo4j and LLM.
+
+### \_\_init\_\_
+
+```python
+def __init__(host: str = "neo4j://localhost",
+             port: int = 7687,
+             username: str = "neo4j",
+             password: str = "password",
+             embeddings: Optional[Embedder] = OpenAIEmbeddings(
+                 model="text-embedding-3-large"),
+             embedding_dimension: Optional[int] = 3072,
+             llm: Optional[LLMInterface] = OpenAILLM(
+                 model_name="gpt-4o",
+                 model_params={
+                     "response_format": {
+                         "type": "json_object"
+                     },
+                     "temperature": 0
+                 },
+             ),
+             query_llm: Optional[LLMInterface] = OpenAILLM(
+                 model_name="gpt-4o", model_params={"temperature": 0}),
+             entities: Optional[List[str]] = None,
+             relations: Optional[List[str]] = None,
+             potential_schema: Optional[List[tuple[str, str, str]]] = None)
+```
+
+Initialize a Neo4j graph query engine.
+
+**Arguments**:
+
+- `host` _str_ - Neo4j host URL.
+- `port` _int_ - Neo4j port.
+- `username` _str_ - Neo4j username.
+- `password` _str_ - Neo4j password.
+- `embeddings` _Embedder_ - Embedding model to embed chunk data and retrieve answers.
+- `embedding_dimension` _int_ - Dimension of the embeddings for the model.
+- `llm` _LLMInterface_ - Language model for creating the knowledge graph (returns JSON responses).
+- `query_llm` _LLMInterface_ - Language model for querying the knowledge graph.
+- `entities` _List[str], optional_ - Custom entities for guiding graph construction.
+- `relations` _List[str], optional_ - Custom relations for guiding graph construction.
+  potential_schema (List[tuple[str, str, str]], optional):
+  Schema (triplets, i.e., [entity] -> [relationship] -> [entity]) to guide graph construction.
+
+### init\_db
+
+```python
+def init_db(input_doc: Union[list[Document], None] = None)
+```
+
+Initialize the Neo4j graph database using the provided input doc.
+Currently this method only supports single document input (only reads the first doc).
+
+This method supports both text and PDF documents. It performs the following steps:
+1. Clears the existing database.
+2. Extracts graph nodes and relationships from the input data to build a knowledge graph.
+3. Creates a vector index for efficient retrieval.
+
+**Arguments**:
+
+- `input_doc` _list[Document]_ - Input documents for building the graph.
+  
+
+**Raises**:
+
+- `ValueError` - If the input document is not provided or its type is unsupported.
+
+### add\_records
+
+```python
+def add_records(new_records: list[Document]) -> bool
+```
+
+Add new records to the Neo4j database.
+
+**Arguments**:
+
+- `new_records` _list[Document]_ - List of new Documents to be added
+  
+
+**Returns**:
+
+- `bool` - True if records were added successfully, False otherwise.
+
+### query
+
+```python
+def query(question: str,
+          n_results: int = 1,
+          **kwargs) -> GraphStoreQueryResult
+```
+
+Query the Neo4j database using a natural language question.
+
+**Arguments**:
+
+- `question` _str_ - The question to be answered by querying the graph.
+  
+
+**Returns**:
+
+- `GraphStoreQueryResult` - The result of the query.
+

@@ -1,0 +1,62 @@
+---
+sidebarTitle: console
+title: io.console
+---
+
+## IOConsole
+
+```python
+class IOConsole(IOStream)
+```
+
+A console input/output stream.
+
+### print
+
+```python
+def print(*objects: Any,
+          sep: str = " ",
+          end: str = "\n",
+          flush: bool = False) -> None
+```
+
+Print data to the output stream.
+
+**Arguments**:
+
+- `objects` _any_ - The data to print.
+- `sep` _str, optional_ - The separator between objects. Defaults to " ".
+- `end` _str, optional_ - The end of the output. Defaults to "
+  ".
+- `flush` _bool, optional_ - Whether to flush the output. Defaults to False.
+
+### send
+
+```python
+def send(message: BaseMessage) -> None
+```
+
+Send a message to the output stream.
+
+**Arguments**:
+
+- `message` _Any_ - The message to send.
+
+### input
+
+```python
+def input(prompt: str = "", *, password: bool = False) -> str
+```
+
+Read a line from the input stream.
+
+**Arguments**:
+
+- `prompt` _str, optional_ - The prompt to display. Defaults to "".
+- `password` _bool, optional_ - Whether to read a password. Defaults to False.
+  
+
+**Returns**:
+
+- `str` - The line read from the input stream.
+

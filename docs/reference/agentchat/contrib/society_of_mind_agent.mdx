@@ -1,0 +1,63 @@
+---
+sidebarTitle: society_of_mind_agent
+title: agentchat.contrib.society_of_mind_agent
+---
+
+## SocietyOfMindAgent
+
+```python
+class SocietyOfMindAgent(ConversableAgent)
+```
+
+(In preview) A single agent that runs a Group Chat as an inner monologue.
+At the end of the conversation (termination for any reason), the SocietyOfMindAgent
+applies the response_preparer method on the entire inner monologue message history to
+extract a final answer for the reply.
+
+Most arguments are inherited from ConversableAgent. New arguments are:
+chat_manager (GroupChatManager): the group chat manager that will be running the inner monologue
+response_preparer (Optional, Callable or String): If response_preparer is a callable function, then
+it should have the signature:
+f( self: SocietyOfMindAgent, messages: List[Dict])
+where `self` is this SocietyOfMindAgent, and `messages` is a list of inner-monologue messages.
+The function should return a string representing the final response (extracted or prepared)
+from that history.
+If response_preparer is a string, then it should be the LLM prompt used to extract the final
+message from the inner chat transcript.
+The default response_preparer depends on if an llm_config is provided. If llm_config is False,
+then the response_preparer deterministically returns the last message in the inner-monolgue. If
+llm_config is set to anything else, then a default LLM prompt is used.
+
+### chat\_manager
+
+```python
+@property
+def chat_manager() -> Union[GroupChatManager, None]
+```
+
+Return the group chat manager.
+
+### update\_chat\_manager
+
+```python
+def update_chat_manager(chat_manager: Union[GroupChatManager, None])
+```
+
+Update the chat manager.
+
+**Arguments**:
+
+- `chat_manager` _GroupChatManager_ - the group chat manager
+
+### generate\_inner\_monologue\_reply
+
+```python
+def generate_inner_monologue_reply(
+    messages: Optional[list[dict]] = None,
+    sender: Optional[Agent] = None,
+    config: Optional[OpenAIWrapper] = None
+) -> tuple[bool, Union[str, dict, None]]
+```
+
+Generate a reply by running the group chat
+

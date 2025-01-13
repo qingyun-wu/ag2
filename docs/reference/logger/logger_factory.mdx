@@ -1,0 +1,33 @@
+---
+sidebarTitle: logger_factory
+title: logger.logger_factory
+---
+
+## LoggerFactory
+
+```python
+class LoggerFactory()
+```
+
+Factory class to create logger objects.
+
+### get\_logger
+
+```python
+@staticmethod
+def get_logger(logger_type: Literal["sqlite", "file"] = "sqlite",
+               config: Optional[dict[str, Any]] = None) -> BaseLogger
+```
+
+Factory method to create logger objects.
+
+**Arguments**:
+
+- `logger_type` _Literal["sqlite", "file"], optional_ - Type of logger. Defaults to "sqlite".
+- `config` _Optional[dict[str, Any]], optional_ - Configuration for logger. Defaults to None.
+  
+
+**Returns**:
+
+- `BaseLogger` - Logger object
+

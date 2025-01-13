@@ -1,0 +1,32 @@
+---
+sidebarTitle: neo4j_native_graph_rag_capability
+title: agentchat.contrib.graph_rag.neo4j_native_graph_rag_capability
+---
+
+## Neo4jNativeGraphCapability
+
+```python
+class Neo4jNativeGraphCapability(GraphRagCapability)
+```
+
+The Neo4j native graph capability integrates Neo4j native query engine into a graph rag agent.
+
+For usage, please refer to example notebook/agentchat_graph_rag_neo4j_native.ipynb
+
+### \_\_init\_\_
+
+```python
+def __init__(query_engine: Neo4jNativeGraphQueryEngine)
+```
+
+Initialize GraphRAG capability with a neo4j native graph query engine
+
+### add\_to\_agent
+
+```python
+def add_to_agent(agent: ConversableAgent)
+```
+
+Add native Neo4j GraphRAG capability to a ConversableAgent.
+llm_config of the agent must be None/False (default) to make sure the returned message only contains information retrieved from the graph DB instead of any LLMs.
+

@@ -1,0 +1,48 @@
+---
+sidebarTitle: jupyter_client
+title: coding.jupyter.jupyter_client
+---
+
+## JupyterClient
+
+```python
+class JupyterClient()
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(connection_info: JupyterConnectionInfo)
+```
+
+(Experimental) A client for communicating with a Jupyter gateway server.
+
+**Arguments**:
+
+- `connection_info` _JupyterConnectionInfo_ - Connection information
+
+### start\_kernel
+
+```python
+def start_kernel(kernel_spec_name: str) -> str
+```
+
+Start a new kernel.
+
+**Arguments**:
+
+- `kernel_spec_name` _str_ - Name of the kernel spec to start
+  
+
+**Returns**:
+
+- `str` - ID of the started kernel
+
+## JupyterKernelClient
+
+```python
+class JupyterKernelClient()
+```
+
+(Experimental) A client for communicating with a Jupyter kernel.
+

@@ -1,0 +1,565 @@
+---
+custom_edit_url: https://github.com/ag2ai/ag2/edit/main/notebook/agentchat_graph_rag_neo4j.ipynb
+description: Neo4j GraphRAG utilises a knowledge graph and can be added as a capability
+  to agents.
+source_notebook: /notebook/agentchat_graph_rag_neo4j.ipynb
+tags:
+- RAG
+title: Using Neo4j's graph database with AG2 agents for Question & Answering
+---
+
+<a href="https://colab.research.google.com/github/ag2ai/ag2/blob/main/notebook/agentchat_graph_rag_neo4j.ipynb" class="colab-badge" target="_blank"><img noZoom src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a>
+<a href="https://github.com/ag2ai/ag2/blob/main/notebook/agentchat_graph_rag_neo4j.ipynb" class="github-badge" target="_blank"><img noZoom src="https://img.shields.io/badge/Open%20on%20GitHub-grey?logo=github" alt="Open on GitHub" /></a>
+
+
+
+
+AG2 provides GraphRAG integration through agent capabilities. This is an
+example utilising the integration of Neo4j’s property graph database
+with LlamaIndex’s graph query engine.
+
+
+<div class="info Requirements">
+<Info>
+To install the LlamaIndex, Neo4j, and document processing dependencies, install with the 'neo4j' extra:
+
+```bash
+pip install ag2[neo4j]
+```
+</Info>
+</div>
+
+
+## Set Configuration and OpenAI API Key
+
+By default, in order to use LlamaIndex with Neo4j you need to have an
+OpenAI key in your environment variable `OPENAI_API_KEY`.
+
+You can utilise an OAI_CONFIG_LIST file and extract the OpenAI API key
+and put it in the environment, as will be shown in the following cell.
+
+Alternatively, you can load the environment variable yourself.
+
+
+<div class="tip">
+<Tip>
+Learn more about configuring LLMs for agents [here](/docs/topics/llm_configuration).
+</Tip>
+</div>
+
+
+```python
+import os
+
+import autogen
+
+config_list = autogen.config_list_from_json(env_or_file="OAI_CONFIG_LIST")
+
+# Put the OpenAI API key into the environment
+os.environ["OPENAI_API_KEY"] = config_list[0]["api_key"]
+```
+
+``` text
+/usr/local/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+```
+
+```python
+# This is needed to allow nested asyncio calls for Neo4j in Jupyter
+import nest_asyncio
+
+nest_asyncio.apply()
+```
+
+## Key Information: Using Neo4j with LLM Models 🚀 
+
+> **Important**  
+> - **Default Models**: - **Question Answering**: OpenAI’s `GPT-4o` with
+> `temperature=0.0`. - **Embedding**: OpenAI’s `text-embedding-3-small`.
+>
+> -   **Customization**: You can change these defaults by setting the
+>     following parameters on the `Neo4jGraphQueryEngine`:
+>     -   `llm`: Specify a LLM instance with a llm you like.
+>     -   `embedding`: Specify a BaseEmbedding instance with a embedding
+>         model.
+> -   **Reference**
+>     -   https://docs.llamaindex.ai/en/stable/module_guides/models/llms/
+>     -   https://docs.llamaindex.ai/en/stable/examples/property_graph/graph_store/
+
+## Create a Knowledge Graph with Your Own Data
+
+**Note:** You need to have a Neo4j database running. If you are running
+one in a Docker container, please ensure your Docker network is setup to
+allow access to it.
+
+In this example, the Neo4j endpoint is set to host=“bolt://172.17.0.3”
+and port=7687, please adjust accordingly. For how to spin up a Neo4j
+with Docker, you can refer to
+[this](https://docs.llamaindex.ai/en/stable/examples/property_graph/property_graph_neo4j/#:~:text=stores%2Dneo4j-,Docker%20Setup,%C2%B6,-To%20launch%20Neo4j)
+
+We initialise the database with a Word document, creating the Property
+graph in Neo4j.
+
+```python
+# IMPORTS
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.llms.openai import OpenAI
+
+from autogen import ConversableAgent, UserProxyAgent
+from autogen.agentchat.contrib.graph_rag.neo4j_graph_query_engine import Neo4jGraphQueryEngine
+```
+
+### A Simple Example
+
+In this example, the graph schema is auto-generated. Entities and
+relationship are created as they fit into the data
+
+LlamaIndex supports a lot of extensions including docx, text, pdf, csv,
+etc. Find more details in Neo4jGraphQueryEngine. You may need to install
+dependencies for each extension. In this example, we need
+`pip install docx2txt`
+
+We start by creating a Neo4j property graph (knowledge graph) with a
+sample employee handbook of a finctional company called BUZZ
+
+```python
+# load documents
+from autogen.agentchat.contrib.graph_rag.document import Document, DocumentType
+
+input_path = "../test/agentchat/contrib/graph_rag/BUZZ_Employee_Handbook.docx"
+input_documents = [Document(doctype=DocumentType.TEXT, path_or_url=input_path)]
+```
+
+
+```python
+# pip install docx2txt
+# Auto generate graph schema from unstructured data
+
+
+# Create Neo4jGraphQueryEngine
+query_engine = Neo4jGraphQueryEngine(
+    username="neo4j",  # Change if you reset username
+    password="password",  # Change if you reset password
+    host="bolt://172.17.0.3",  # Change
+    port=7687,  # if needed
+    llm=OpenAI(model="gpt-4o", temperature=0.0),  # Default, no need to specify
+    embedding=OpenAIEmbedding(model_name="text-embedding-3-small"),  # except you want to use a different model
+    database="neo4j",  # Change if you want to store the graphh in your custom database
+)
+
+# Ingest data and create a new property graph
+query_engine.init_db(input_doc=input_documents)
+```
+
+``` text
+Parsing nodes: 100%|██████████| 1/1 [00:00<00:00, 83.68it/s]
+Extracting paths from text with schema: 100%|██████████| 3/3 [00:07<00:00,  2.49s/it]
+Extracting and inferring knowledge graph from text: 100%|██████████| 3/3 [00:07<00:00,  2.51s/it]
+Generating embeddings: 100%|██████████| 1/1 [00:00<00:00,  1.12it/s]
+Generating embeddings: 100%|██████████| 2/2 [00:01<00:00,  1.47it/s]
+```
+
+Instead of creating a new property graph, if you want to use an existing
+graph, you can connect to its database
+
+```python
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.llms.openai import OpenAI
+
+from autogen.agentchat.contrib.graph_rag.neo4j_graph_query_engine import Neo4jGraphQueryEngine
+
+query_engine = Neo4jGraphQueryEngine(
+    username="neo4j",  # Change if you reset username
+    password="password",  # Change if you reset password
+    host="bolt://172.17.0.3",  # Change
+    port=7687,  # if needed
+    llm=OpenAI(model="gpt-4o", temperature=0.0),  # Default, no need to specify
+    embedding=OpenAIEmbedding(model_name="text-embedding-3-small"),  # except you want to use a different model
+    database="neo4j",  # Change if you want to store the graphh in your custom database
+)
+
+# Connect to the existing graph
+query_engine.connect_db()
+```
+
+An example property graph:
+
+<figure>
+<img
+src="agentchat_graph_rag_neo4j_files/figure-markdown_strict/cell-13-1-neo4j_property_graph_1.png"
+alt="neo4j_property_graph_1.png" />
+<figcaption aria-hidden="true">neo4j_property_graph_1.png</figcaption>
+</figure>
+
+### Add capability to a ConversableAgent and query them
+
+Notice that we intentionally moved the specific content of Equal
+Employment Opportunity Policy into a different document to add later
+
+```python
+from autogen.agentchat.contrib.graph_rag.neo4j_graph_rag_capability import Neo4jGraphCapability
+
+# Create a ConversableAgent (no LLM configuration)
+graph_rag_agent = ConversableAgent(
+    name="buzz_agent",
+    human_input_mode="NEVER",
+)
+
+# Associate the capability with the agent
+graph_rag_capability = Neo4jGraphCapability(query_engine)
+graph_rag_capability.add_to_agent(graph_rag_agent)
+
+# Create a user proxy agent to converse with our RAG agent
+user_proxy = UserProxyAgent(
+    name="user_proxy",
+    human_input_mode="ALWAYS",
+)
+
+user_proxy.initiate_chat(graph_rag_agent, message="Which company is the employer?")
+```
+
+``` text
+user_proxy (to buzz_agent):
+
+Which company is the employer?
+
+--------------------------------------------------------------------------------
+buzz_agent (to user_proxy):
+
+The employer is BUZZ Co.
+
+--------------------------------------------------------------------------------
+user_proxy (to buzz_agent):
+
+What policies does it have?
+
+--------------------------------------------------------------------------------
+buzz_agent (to user_proxy):
+
+BUZZ Co. has several policies, including:
+
+1. Employment Policies and Practices
+2. Equal Employment Opportunity
+3. Health and Dental Insurance
+4. Solicitation Policy
+5. Separation Policy
+6. Computer and Information Security Policy
+7. Bereavement Leave Policy
+8. Tax Deferred Annuity Plan
+9. Confidentiality Policy
+10. Policy Against Workplace Harassment
+11. Non-Disclosure of Confidential Information
+12. Meetings and Conferences Policy
+13. Reimbursement of Expenses Policy
+14. Voluntary At-Will Employment
+15. Extended Personal Leave Policy
+16. Hours of Work Policy
+
+These policies cover a wide range of employment aspects, from leave and separation to confidentiality and security.
+
+--------------------------------------------------------------------------------
+user_proxy (to buzz_agent):
+
+What's Buzz's equal employment opprtunity policy?
+
+--------------------------------------------------------------------------------
+buzz_agent (to user_proxy):
+
+The specific content of BUZZ Co.'s Equal Employment Opportunity policy is not provided in the document. However, it is mentioned that BUZZ Co. has an Equal Employment Opportunity policy, which typically would state the company's commitment to providing equal employment opportunities and non-discrimination in the workplace.
+
+--------------------------------------------------------------------------------
+user_proxy (to buzz_agent):
+
+What does Civic Responsibility state?
+
+--------------------------------------------------------------------------------
+buzz_agent (to user_proxy):
+
+The document does not provide any information about a Civic Responsibility policy. Therefore, I don't have details on what BUZZ Co.'s Civic Responsibility might state.
+
+--------------------------------------------------------------------------------
+user_proxy (to buzz_agent):
+
+Does Donald Trump work there?
+
+--------------------------------------------------------------------------------
+buzz_agent (to user_proxy):
+
+The document does not provide any information about specific individuals, including whether Donald Trump works at BUZZ Co. Therefore, I don't have any details on the employment of Donald Trump at BUZZ Co.
+
+--------------------------------------------------------------------------------
+```
+
+``` text
+ChatResult(chat_id=None, chat_history=[{'content': 'Which company is the employer?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': 'The employer is BUZZ Co.', 'role': 'user', 'name': 'buzz_agent'}, {'content': 'What policies does it have?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': 'BUZZ Co. has several policies, including:\n\n1. Employment Policies and Practices\n2. Equal Employment Opportunity\n3. Health and Dental Insurance\n4. Solicitation Policy\n5. Separation Policy\n6. Computer and Information Security Policy\n7. Bereavement Leave Policy\n8. Tax Deferred Annuity Plan\n9. Confidentiality Policy\n10. Policy Against Workplace Harassment\n11. Non-Disclosure of Confidential Information\n12. Meetings and Conferences Policy\n13. Reimbursement of Expenses Policy\n14. Voluntary At-Will Employment\n15. Extended Personal Leave Policy\n16. Hours of Work Policy\n\nThese policies cover a wide range of employment aspects, from leave and separation to confidentiality and security.', 'role': 'user', 'name': 'buzz_agent'}, {'content': "What's Buzz's equal employment opprtunity policy?", 'role': 'assistant', 'name': 'user_proxy'}, {'content': "The specific content of BUZZ Co.'s Equal Employment Opportunity policy is not provided in the document. However, it is mentioned that BUZZ Co. has an Equal Employment Opportunity policy, which typically would state the company's commitment to providing equal employment opportunities and non-discrimination in the workplace.", 'role': 'user', 'name': 'buzz_agent'}, {'content': 'What does Civic Responsibility state?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': "The document does not provide any information about a Civic Responsibility policy. Therefore, I don't have details on what BUZZ Co.'s Civic Responsibility might state.", 'role': 'user', 'name': 'buzz_agent'}, {'content': 'Does Donald Trump work there?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': "The document does not provide any information about specific individuals, including whether Donald Trump works at BUZZ Co. Therefore, I don't have any details on the employment of Donald Trump at BUZZ Co.", 'role': 'user', 'name': 'buzz_agent'}], summary="The document does not provide any information about specific individuals, including whether Donald Trump works at BUZZ Co. Therefore, I don't have any details on the employment of Donald Trump at BUZZ Co.", cost={'usage_including_cached_inference': {'total_cost': 0}, 'usage_excluding_cached_inference': {'total_cost': 0}}, human_input=['What policies does it have?', "What's Buzz's equal employment opprtunity policy?", 'What does Civic Responsibility state?', 'Does Donald Trump work there?', 'exit'])
+```
+
+### Revisit the example by defining custom entities, relations and schema
+
+By providing custom entities, relations and schema, you could guide the
+engine to create a graph that better extracts the structure within the
+data.
+
+We set `strict=True` to tell the engine to only extracting allowed
+relationships from the data for each entity
+
+```python
+from typing import Literal
+
+# best practice to use upper-case
+entities = Literal["EMPLOYEE", "EMPLOYER", "POLICY", "BENEFIT", "POSITION", "DEPARTMENT", "CONTRACT", "RESPONSIBILITY"]
+relations = Literal[
+    "FOLLOWS",
+    "PROVIDES",
+    "APPLIES_TO",
+    "DEFINED_AS",
+    "ASSIGNED_TO",
+    "PART_OF",
+    "MANAGES",
+    "REQUIRES",
+    "ENTITLED_TO",
+    "REPORTS_TO",
+]
+
+# Define which entities can have which relationships. It can also be used a a guidance if strict is False.
+schema = {
+    "EMPLOYEE": ["FOLLOWS", "APPLIES_TO", "ASSIGNED_TO", "ENTITLED_TO", "REPORTS_TO"],
+    "EMPLOYER": ["PROVIDES", "DEFINED_AS", "MANAGES", "REQUIRES"],
+    "POLICY": ["APPLIES_TO", "DEFINED_AS", "REQUIRES"],
+    "BENEFIT": ["PROVIDES", "ENTITLED_TO"],
+    "POSITION": ["DEFINED_AS", "PART_OF", "ASSIGNED_TO"],
+    "DEPARTMENT": ["PART_OF", "MANAGES", "REQUIRES"],
+    "CONTRACT": ["PROVIDES", "REQUIRES", "APPLIES_TO"],
+    "RESPONSIBILITY": ["ASSIGNED_TO", "REQUIRES", "DEFINED_AS"],
+}
+```
+
+``` text
+Parsing nodes: 100%|██████████| 1/1 [00:00<00:00, 71.74it/s]
+Extracting paths from text with schema: 100%|██████████| 3/3 [00:47<00:00, 15.87s/it]
+Generating embeddings: 100%|██████████| 1/1 [00:00<00:00,  2.36it/s]
+Generating embeddings: 100%|██████████| 1/1 [00:00<00:00,  1.47it/s]
+```
+
+### Create the query engine and load the document
+
+```python
+# Create Neo4jGraphQueryEngine
+query_engine = Neo4jGraphQueryEngine(
+    username="neo4j",  # Change these as needed
+    password="neo4jneo4j",
+    host="bolt://192.168.0.115",
+    port=7687,
+    database="neo4j",
+    llm=OpenAI(model="gpt-4o", temperature=0.0),
+    embedding=OpenAIEmbedding(model_name="text-embedding-3-small"),
+    entities=entities,  # possible entities
+    relations=relations,  # possible relations
+    schema=schema,
+    strict=True,  # enforce the extracted relationships to be in the schema
+)
+
+# Ingest data and initialize the database
+query_engine.init_db(input_doc=input_documents)
+```
+
+``` text
+/home/mark/miniconda3/envs/ag2neo4j/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+Parsing nodes: 100%|██████████| 1/1 [00:00<00:00, 321.70it/s]
+Extracting paths from text with schema: 100%|██████████| 3/3 [00:29<00:00,  9.92s/it]
+Generating embeddings: 100%|██████████| 1/1 [00:00<00:00,  1.41it/s]
+Generating embeddings: 100%|██████████| 1/1 [00:01<00:00,  1.19s/it]
+```
+
+The Property graph screenshot is shown below:
+
+<figure>
+<img
+src="agentchat_graph_rag_neo4j_files/figure-markdown_strict/cell-20-1-neo4j_property_graph_2.png"
+alt="neo4j_property_graph_2.png" />
+<figcaption aria-hidden="true">neo4j_property_graph_2.png</figcaption>
+</figure>
+
+### Add capability to a ConversableAgent and query them again
+
+You should find the answers are much more detailed and accurate since
+our schema fits well
+
+```python
+from autogen import ConversableAgent, UserProxyAgent
+from autogen.agentchat.contrib.graph_rag.neo4j_graph_rag_capability import Neo4jGraphCapability
+
+# Create a ConversableAgent (no LLM configuration)
+graph_rag_agent = ConversableAgent(
+    name="rag_agent",
+    human_input_mode="NEVER",
+)
+
+# Associate the capability with the agent
+graph_rag_capability = Neo4jGraphCapability(query_engine)
+graph_rag_capability.add_to_agent(graph_rag_agent)
+
+# Create a user proxy agent to converse with our RAG agent
+user_proxy = UserProxyAgent(name="user_proxy", human_input_mode="ALWAYS", code_execution_config=False)
+
+user_proxy.initiate_chat(graph_rag_agent, message="Which company is the employer?")
+```
+
+``` text
+user_proxy (to rag_agent):
+
+Which company is the employer?
+
+--------------------------------------------------------------------------------
+rag_agent (to user_proxy):
+
+The employer is BUZZ Co.
+
+--------------------------------------------------------------------------------
+user_proxy (to rag_agent):
+
+What polices does it have?
+
+--------------------------------------------------------------------------------
+rag_agent (to user_proxy):
+
+BUZZ Co. has several policies outlined in its Employee Handbook, including:
+
+1. **Voluntary At-Will Employment**: Employment can be terminated by either party at any time, with or without cause.
+2. **Equal Employment Opportunity**: Commitment to non-discrimination and equal opportunity.
+3. **Policy Against Workplace Harassment**: Prohibits all forms of workplace harassment.
+4. **Confidentiality Policy**: Requires non-disclosure of confidential information.
+5. **Solicitation Policy**: Restrictions on solicitation during work time and on premises.
+6. **Hours of Work, Attendance, and Punctuality**: Guidelines for work hours, attendance, and punctuality.
+7. **Overtime Policy**: Overtime pay for non-exempt employees for hours worked over 40 in a week.
+8. **Position Description and Salary Administration**: Details on job descriptions and salary distribution.
+9. **Work Review**: Ongoing and annual performance reviews.
+10. **Economic Benefits and Insurance**: Health, dental, and life insurance, retirement plans, and other benefits.
+11. **Leave Benefits and Other Work Policies**: Various leave policies including vacation, sick leave, personal leave, and more.
+12. **Reimbursement of Expenses**: Guidelines for expense reimbursement.
+13. **Separation Policy**: Procedures for resignation or termination.
+14. **Return of Property**: Requirement to return company property upon separation.
+15. **Review of Personnel Action**: Process for reviewing personnel actions.
+16. **Personnel Records**: Confidentiality and accuracy of personnel records.
+17. **Outside Employment**: Permitted if it does not interfere with BUZZ Co. job performance.
+18. **Non-Disclosure of Confidential Information**: Requirement to sign a non-disclosure agreement.
+19. **Computer and Information Security**: Guidelines for the use of company computer systems.
+20. **Internet Acceptable Use Policy**: Internet usage for business purposes only.
+
+These policies are designed to guide employees in their conduct and responsibilities at BUZZ Co.
+
+--------------------------------------------------------------------------------
+user_proxy (to rag_agent):
+
+What does Civic Responsibility state?
+
+--------------------------------------------------------------------------------
+rag_agent (to user_proxy):
+
+The Civic Responsibility policy at BUZZ Co. states that the company will pay employees the difference between their salary and any amount paid by the government, unless prohibited by law, for up to a maximum of ten days of jury duty. Additionally, BUZZ Co. will pay employees the difference between their salary and any amount paid by the government or any other source for serving as an Election Day worker at the polls on official election days, not to exceed two elections in one given calendar year.
+
+--------------------------------------------------------------------------------
+user_proxy (to paul_graham_agent):
+
+Which policy listed above does civic responsibility belong to?
+
+--------------------------------------------------------------------------------
+paul_graham_agent (to user_proxy):
+
+The Civic Responsibility policy belongs to the "Leave Benefits and Other Work Policies" section of the BUZZ Co. Employee Handbook.
+
+--------------------------------------------------------------------------------
+```
+
+``` text
+ChatResult(chat_id=None, chat_history=[{'content': 'Which company is the employer?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': 'The employer is BUZZ Co.', 'role': 'user', 'name': 'paul_graham_agent'}, {'content': 'What polices does it have?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': 'BUZZ Co. has several policies outlined in its Employee Handbook, including:\n\n1. **Voluntary At-Will Employment**: Employment can be terminated by either party at any time, with or without cause.\n2. **Equal Employment Opportunity**: Commitment to non-discrimination and equal opportunity.\n3. **Policy Against Workplace Harassment**: Prohibits all forms of workplace harassment.\n4. **Confidentiality Policy**: Requires non-disclosure of confidential information.\n5. **Solicitation Policy**: Restrictions on solicitation during work time and on premises.\n6. **Hours of Work, Attendance, and Punctuality**: Guidelines for work hours, attendance, and punctuality.\n7. **Overtime Policy**: Overtime pay for non-exempt employees for hours worked over 40 in a week.\n8. **Position Description and Salary Administration**: Details on job descriptions and salary distribution.\n9. **Work Review**: Ongoing and annual performance reviews.\n10. **Economic Benefits and Insurance**: Health, dental, and life insurance, retirement plans, and other benefits.\n11. **Leave Benefits and Other Work Policies**: Various leave policies including vacation, sick leave, personal leave, and more.\n12. **Reimbursement of Expenses**: Guidelines for expense reimbursement.\n13. **Separation Policy**: Procedures for resignation or termination.\n14. **Return of Property**: Requirement to return company property upon separation.\n15. **Review of Personnel Action**: Process for reviewing personnel actions.\n16. **Personnel Records**: Confidentiality and accuracy of personnel records.\n17. **Outside Employment**: Permitted if it does not interfere with BUZZ Co. job performance.\n18. **Non-Disclosure of Confidential Information**: Requirement to sign a non-disclosure agreement.\n19. **Computer and Information Security**: Guidelines for the use of company computer systems.\n20. **Internet Acceptable Use Policy**: Internet usage for business purposes only.\n\nThese policies are designed to guide employees in their conduct and responsibilities at BUZZ Co.', 'role': 'user', 'name': 'paul_graham_agent'}, {'content': 'What does Civic Responsibility state?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': 'The Civic Responsibility policy at BUZZ Co. states that the company will pay employees the difference between their salary and any amount paid by the government, unless prohibited by law, for up to a maximum of ten days of jury duty. Additionally, BUZZ Co. will pay employees the difference between their salary and any amount paid by the government or any other source for serving as an Election Day worker at the polls on official election days, not to exceed two elections in one given calendar year.', 'role': 'user', 'name': 'paul_graham_agent'}, {'content': 'Which policy listed above does civic responsibility belong to?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': 'The Civic Responsibility policy belongs to the "Leave Benefits and Other Work Policies" section of the BUZZ Co. Employee Handbook.', 'role': 'user', 'name': 'paul_graham_agent'}], summary='The Civic Responsibility policy belongs to the "Leave Benefits and Other Work Policies" section of the BUZZ Co. Employee Handbook.', cost={'usage_including_cached_inference': {'total_cost': 0}, 'usage_excluding_cached_inference': {'total_cost': 0}}, human_input=['What polices does it have?', 'What does Civic Responsibility state?', 'Which policy listed above does civic responsibility belong to?', 'exit'])
+```
+
+### Incrementally add new documents to the existing knoweledge graph. 
+
+```python
+input_path = "../test/agentchat/contrib/graph_rag/BUZZ_Equal-Employment-Opportunity-Policy-Detailed.docx"
+input_documents = [Document(doctype=DocumentType.TEXT, path_or_url=input_path)]
+
+_ = query_engine.add_records(input_documents)
+```
+
+``` text
+Parsing nodes: 100%|██████████| 1/1 [00:00<00:00, 41.46it/s]
+Extracting paths from text with schema: 100%|██████████| 1/1 [00:12<00:00, 12.76s/it]
+Generating embeddings: 100%|██████████| 1/1 [00:00<00:00,  1.13it/s]
+Generating embeddings: 100%|██████████| 1/1 [00:00<00:00,  1.87it/s]
+```
+
+Checking the property graph, we’ll find a different Equal Employment
+Opportunity Policy Node
+
+<figure>
+<img
+src="agentchat_graph_rag_neo4j_files/figure-markdown_strict/cell-25-1-neo4j_property_graph_3.png"
+alt="neo4j_property_graph_3.png" />
+<figcaption aria-hidden="true">neo4j_property_graph_3.png</figcaption>
+</figure>
+
+### Now let’s create a new GraphRag agent and some questions related to both documents
+
+```python
+from autogen.agentchat.contrib.graph_rag.neo4j_graph_rag_capability import Neo4jGraphCapability
+
+# Ask questions about both documents
+user_proxy.initiate_chat(graph_rag_agent, message="What is Equal Employment Opportunity Policy at BUZZ?")
+```
+
+``` text
+user_proxy (to rag_agent):
+
+What is Equal Employment Opportunity Policy at BUZZ?
+
+--------------------------------------------------------------------------------
+rag_agent (to user_proxy):
+
+The Equal Employment Opportunity (EEO) and Anti-Discrimination Policy at BUZZ Co. is designed to ensure full compliance with all applicable anti-discrimination laws and regulations. BUZZ Co. is an equal opportunity employer and strictly prohibits any form of discrimination or harassment. The policy ensures equal employment opportunities for all employees and applicants, regardless of race, color, religion, sex, sexual orientation, gender identity or expression, pregnancy, age, national origin, disability status, genetic information, protected veteran status, or any other legally protected characteristic.
+
+The policy applies to all aspects of the employment relationship, including recruitment, employment, promotion, transfer, training, working conditions, wages and salary administration, and employee benefits. It also extends to the selection and treatment of independent contractors and temporary agency personnel working on BUZZ Co. premises.
+
+BUZZ Co. enforces this policy by posting required notices, including EEO statements in job advertisements, posting job openings with state agencies, and prohibiting retaliation against individuals who report discrimination or harassment. Employees are required to report incidents of discrimination or harassment, which are promptly investigated, and appropriate corrective action is taken.
+
+--------------------------------------------------------------------------------
+user_proxy (to rag_agent):
+
+What is prohibited sexual harassment stated in the policy?
+
+--------------------------------------------------------------------------------
+rag_agent (to user_proxy):
+
+Prohibited sexual harassment, as stated in BUZZ Co.'s policy, includes unwelcome sexual advances, requests for sexual favors, and other verbal or physical conduct of a sexual nature. Such conduct is considered prohibited sexual harassment when:
+
+1. Submission to such conduct is explicitly or implicitly made a term or condition of employment.
+2. Submission to or rejection of such conduct is used as the basis for employment decisions.
+3. The conduct has the purpose or effect of unreasonably interfering with an individual’s work performance or creating an intimidating, hostile, or offensive work environment.
+
+The policy also encompasses any unwelcome conduct based on other protected characteristics, such as race, color, religion, sex, sexual orientation, gender identity or expression, pregnancy, age, national origin, disability status, genetic information, or protected veteran status. Such conduct becomes unlawful when continued employment is made contingent upon the employee's toleration of the offensive conduct, or when the conduct is so severe or pervasive that it creates a work environment that would be considered intimidating, hostile, or abusive by a reasonable person.
+
+--------------------------------------------------------------------------------
+user_proxy (to paul_graham_agent):
+
+List the name of 5 other policies at Buzz.
+
+--------------------------------------------------------------------------------
+paul_graham_agent (to user_proxy):
+
+Certainly! Here are five other policies at BUZZ Co.:
+
+1. **Voluntary At-Will Employment**
+2. **Confidentiality Policy**
+3. **Solicitation Policy**
+4. **Overtime Policy**
+5. **Internet Acceptable Use Policy**
+
+--------------------------------------------------------------------------------
+```
+
+``` text
+ChatResult(chat_id=None, chat_history=[{'content': 'What is Equal Employment Opportunity Policy at BUZZ?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': 'The Equal Employment Opportunity (EEO) and Anti-Discrimination Policy at BUZZ Co. is designed to ensure full compliance with all applicable anti-discrimination laws and regulations. BUZZ Co. is an equal opportunity employer and strictly prohibits any form of discrimination or harassment. The policy ensures equal employment opportunities for all employees and applicants, regardless of race, color, religion, sex, sexual orientation, gender identity or expression, pregnancy, age, national origin, disability status, genetic information, protected veteran status, or any other legally protected characteristic.\n\nThe policy applies to all aspects of the employment relationship, including recruitment, employment, promotion, transfer, training, working conditions, wages and salary administration, and employee benefits. It also extends to the selection and treatment of independent contractors and temporary agency personnel working on BUZZ Co. premises.\n\nBUZZ Co. enforces this policy by posting required notices, including EEO statements in job advertisements, posting job openings with state agencies, and prohibiting retaliation against individuals who report discrimination or harassment. Employees are required to report incidents of discrimination or harassment, which are promptly investigated, and appropriate corrective action is taken.', 'role': 'user', 'name': 'paul_graham_agent'}, {'content': 'What is prohibited sexual harassment stated in the policy?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': "Prohibited sexual harassment, as stated in BUZZ Co.'s policy, includes unwelcome sexual advances, requests for sexual favors, and other verbal or physical conduct of a sexual nature. Such conduct is considered prohibited sexual harassment when:\n\n1. Submission to such conduct is explicitly or implicitly made a term or condition of employment.\n2. Submission to or rejection of such conduct is used as the basis for employment decisions.\n3. The conduct has the purpose or effect of unreasonably interfering with an individual’s work performance or creating an intimidating, hostile, or offensive work environment.\n\nThe policy also encompasses any unwelcome conduct based on other protected characteristics, such as race, color, religion, sex, sexual orientation, gender identity or expression, pregnancy, age, national origin, disability status, genetic information, or protected veteran status. Such conduct becomes unlawful when continued employment is made contingent upon the employee's toleration of the offensive conduct, or when the conduct is so severe or pervasive that it creates a work environment that would be considered intimidating, hostile, or abusive by a reasonable person.", 'role': 'user', 'name': 'paul_graham_agent'}, {'content': 'List the name of 5 other policies at Buzz.', 'role': 'assistant', 'name': 'user_proxy'}, {'content': 'Certainly! Here are five other policies at BUZZ Co.:\n\n1. **Voluntary At-Will Employment**\n2. **Confidentiality Policy**\n3. **Solicitation Policy**\n4. **Overtime Policy**\n5. **Internet Acceptable Use Policy**', 'role': 'user', 'name': 'paul_graham_agent'}], summary='Certainly! Here are five other policies at BUZZ Co.:\n\n1. **Voluntary At-Will Employment**\n2. **Confidentiality Policy**\n3. **Solicitation Policy**\n4. **Overtime Policy**\n5. **Internet Acceptable Use Policy**', cost={'usage_including_cached_inference': {'total_cost': 0}, 'usage_excluding_cached_inference': {'total_cost': 0}}, human_input=['What is prohibited sexual harassment stated in the policy?', 'List the name of 5 other policies at Buzz.', 'exit'])
+```

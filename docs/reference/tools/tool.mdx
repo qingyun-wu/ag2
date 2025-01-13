@@ -1,0 +1,121 @@
+---
+sidebarTitle: tool
+title: tools.tool
+---
+
+## Tool
+
+```python
+class Tool()
+```
+
+A class representing a Tool that can be used by an agent for various tasks.
+
+This class encapsulates a tool with a name, description, and an executable function.
+The tool can be registered with a ConversableAgent for use either with an LLM or for direct execution.
+
+**Attributes**:
+
+- `name` _str_ - The name of the tool.
+- `description` _str_ - A brief description of the tool's purpose or function.
+- `func` _Callable[..., Any]_ - The function to be executed when the tool is called.
+
+### \_\_init\_\_
+
+```python
+def __init__(*,
+             name: Optional[str] = None,
+             description: Optional[str] = None,
+             func_or_tool: Union["Tool", Callable[..., Any]]) -> None
+```
+
+Create a new Tool object.
+
+**Arguments**:
+
+- `name` _str_ - The name of the tool.
+- `description` _str_ - The description of the tool.
+- `func_or_tool` _Union[Tool, Callable[..., Any]]_ - The function or Tool instance to create a Tool from.
+
+### register\_for\_llm
+
+```python
+def register_for_llm(agent: "ConversableAgent") -> None
+```
+
+Registers the tool for use with a ConversableAgent's language model (LLM).
+
+This method registers the tool so that it can be invoked by the agent during
+interactions with the language model.
+
+**Arguments**:
+
+- `agent` _ConversableAgent_ - The agent to which the tool will be registered.
+
+### register\_for\_execution
+
+```python
+def register_for_execution(agent: "ConversableAgent") -> None
+```
+
+Registers the tool for direct execution by a ConversableAgent.
+
+This method registers the tool so that it can be executed by the agent,
+typically outside of the context of an LLM interaction.
+
+**Arguments**:
+
+- `agent` _ConversableAgent_ - The agent to which the tool will be registered.
+
+### \_\_call\_\_
+
+```python
+def __call__(*args: Any, **kwargs: Any) -> Any
+```
+
+Execute the tool by calling its underlying function with the provided arguments.
+
+**Arguments**:
+
+- `*args` - Positional arguments to pass to the tool
+- `**kwargs` - Keyword arguments to pass to the tool
+  
+
+**Returns**:
+
+  The result of executing the tool's function.
+
+### tool\_schema
+
+```python
+@property
+def tool_schema() -> dict[str, Any]
+```
+
+Get the schema for the tool.
+
+This is the preferred way of handling function calls with OpeaAI and compatible frameworks.
+
+### function\_schema
+
+```python
+@property
+def function_schema() -> dict[str, Any]
+```
+
+Get the schema for the function.
+
+This is the old way of handling function calls with OpenAI and compatible frameworks.
+It is provided for backward compatibility.
+
+### realtime\_tool\_schema
+
+```python
+@property
+def realtime_tool_schema() -> dict[str, Any]
+```
+
+Get the schema for the tool.
+
+This is the preferred way of handling function calls with OpeaAI and compatible frameworks.
+

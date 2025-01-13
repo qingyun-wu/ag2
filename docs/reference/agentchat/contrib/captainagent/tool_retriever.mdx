@@ -1,0 +1,120 @@
+---
+sidebarTitle: tool_retriever
+title: agentchat.contrib.captainagent.tool_retriever
+---
+
+## ToolBuilder
+
+```python
+class ToolBuilder()
+```
+
+### bind
+
+```python
+def bind(agent: AssistantAgent, functions: str)
+```
+
+Binds the function to the agent so that agent is aware of it.
+
+### bind\_user\_proxy
+
+```python
+def bind_user_proxy(agent: UserProxyAgent, tool_root: Union[str, list])
+```
+
+Updates user proxy agent with a executor so that code executor can successfully execute function-related code.
+Returns an updated user proxy.
+
+## LocalExecutorWithTools
+
+```python
+class LocalExecutorWithTools(CodeExecutor)
+```
+
+An executor that executes code blocks with injected tools. In this executor, the func within the tools can be called directly without declaring in the code block.
+
+For example, for a tool converted from langchain, the relevant functions can be called directly.
+In this case, the `wikipedia` function can be called directly in the code block. This hides the complexity of the tool.
+
+```python
+from langchain_community.tools import WikipediaQueryRun
+from langchain_community.utilities import WikipediaAPIWrapper
+from autogen.interop import Interoperability
+
+api_wrapper = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=3000)
+langchain_tool = WikipediaQueryRun(api_wrapper=api_wrapper)
+interop = Interoperability()
+ag2_tool = interop.convert_tool(tool=langchain_tool, type="langchain")
+
+# `ag2_tool.name` is wikipedia
+local_executor = LocalExecutorWithTools(tools=[ag2_tool], work_dir="./")
+
+code = '''
+result = wikipedia(tool_input={"query":"Christmas"})
+print(result)
+'''
+print(
+    local_executor.execute_code_blocks(
+        code_blocks=[
+            CodeBlock(language="python", code=code),
+        ]
+    )
+)
+```
+
+**Arguments**:
+
+- `tools` - The tools to inject into the code execution environment. Default is an empty list.
+- `work_dir` - The working directory for the code execution. Default is the current directory.
+
+### code\_extractor
+
+```python
+@property
+def code_extractor() -> CodeExtractor
+```
+
+(Experimental) Export a code extractor that can be used by an agent.
+
+### execute\_code\_blocks
+
+```python
+def execute_code_blocks(code_blocks: list[CodeBlock]) -> CodeResult
+```
+
+Execute code blocks and return the result.
+
+**Arguments**:
+
+- `code_blocks` _List[CodeBlock]_ - The code blocks to execute.
+  
+
+**Returns**:
+
+- `CodeResult` - The result of the code execution.
+
+### restart
+
+```python
+def restart()
+```
+
+Restart the code executor. Since this executor is stateless, no action is needed.
+
+### get\_full\_tool\_description
+
+```python
+def get_full_tool_description(py_file)
+```
+
+Retrieves the function signature for a given Python file.
+
+### find\_callables
+
+```python
+def find_callables(directory)
+```
+
+Find all callable objects defined in Python files within the specified directory.
+

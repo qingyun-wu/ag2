@@ -1,0 +1,36 @@
+---
+sidebarTitle: logger_utils
+title: logger.logger_utils
+---
+
+### get\_current\_ts
+
+```python
+def get_current_ts() -> str
+```
+
+Get current timestamp in UTC timezone.
+
+**Returns**:
+
+- `str` - Current timestamp in UTC timezone
+
+### to\_dict
+
+```python
+def to_dict(
+    obj: Union[int, float, str, bool, dict[Any, Any], list[Any],
+               tuple[Any, ...], Any],
+    exclude: tuple[str, ...] = (),
+    no_recursive: tuple[Any, ...] = ()
+) -> Any
+```
+
+Convert object to dictionary.
+
+**Arguments**:
+
+- `obj` _Union[int, float, str, bool, dict[Any, Any], list[Any], tuple[Any, ...], Any]_ - Object to convert
+- `exclude` _tuple[str, ...], optional_ - Keys to exclude. Defaults to ().
+- `no_recursive` _tuple[Any, ...], optional_ - Types to exclude from recursive conversion. Defaults to ().
+

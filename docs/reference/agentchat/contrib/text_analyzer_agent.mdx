@@ -1,0 +1,43 @@
+---
+sidebarTitle: text_analyzer_agent
+title: agentchat.contrib.text_analyzer_agent
+---
+
+## TextAnalyzerAgent
+
+```python
+class TextAnalyzerAgent(ConversableAgent)
+```
+
+(Experimental) Text Analysis agent, a subclass of ConversableAgent designed to analyze text as instructed.
+
+### \_\_init\_\_
+
+```python
+def __init__(name="analyzer",
+             system_message: Optional[str] = system_message,
+             human_input_mode: Literal["ALWAYS", "NEVER",
+                                       "TERMINATE"] = "NEVER",
+             llm_config: Optional[Union[dict, bool]] = None,
+             **kwargs)
+```
+
+**Arguments**:
+
+- `name` _str_ - name of the agent.
+- `system_message` _str_ - system message for the ChatCompletion inference.
+- `human_input_mode` _str_ - This agent should NEVER prompt the human for input.
+- `llm_config` _dict or False_ - llm inference configuration.
+  Please refer to [OpenAIWrapper.create](/docs/reference/oai/client#create)
+  for available options.
+  To disable llm-based auto reply, set to False.
+- `**kwargs` _dict_ - other kwargs in [ConversableAgent](../conversable_agent#init).
+
+### analyze\_text
+
+```python
+def analyze_text(text_to_analyze, analysis_instructions)
+```
+
+Analyzes the given text as instructed, and returns the analysis.
+

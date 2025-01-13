@@ -1,0 +1,31 @@
+---
+sidebarTitle: task
+title: agentchat.contrib.agent_eval.task
+---
+
+## Task
+
+```python
+class Task(BaseModel)
+```
+
+Class representing a task for agent completion, includes example agent execution for criteria generation.
+
+### parse\_json\_str
+
+```python
+@staticmethod
+def parse_json_str(task: str)
+```
+
+Create a Task object from a json object.
+
+**Arguments**:
+
+- `json_data` _dict_ - A dictionary that represents the task.
+  
+
+**Returns**:
+
+- `Task` - A Task object that represents the json task information.
+

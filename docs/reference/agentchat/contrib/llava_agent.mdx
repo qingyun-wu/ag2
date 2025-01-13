@@ -1,0 +1,37 @@
+---
+sidebarTitle: llava_agent
+title: agentchat.contrib.llava_agent
+---
+
+## LLaVAAgent
+
+```python
+class LLaVAAgent(MultimodalConversableAgent)
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(name: str,
+             system_message: Optional[tuple[str,
+                                            list]] = DEFAULT_LLAVA_SYS_MSG,
+             *args,
+             **kwargs)
+```
+
+**Arguments**:
+
+- `name` _str_ - agent name.
+- `system_message` _str_ - system message for the ChatCompletion inference.
+  Please override this attribute if you want to reprogram the agent.
+- `**kwargs` _dict_ - Please refer to other kwargs in
+  [ConversableAgent](../conversable_agent#init).
+
+### llava\_call
+
+```python
+def llava_call(prompt: str, llm_config: dict) -> str
+```
+
+Makes a call to the LLaVA service to generate text based on a given prompt
+

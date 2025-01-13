@@ -1,0 +1,146 @@
+---
+sidebarTitle: teachability
+title: agentchat.contrib.capabilities.teachability
+---
+
+## Teachability
+
+```python
+class Teachability(AgentCapability)
+```
+
+Teachability uses a vector database to give an agent the ability to remember user teachings,
+where the user is any caller (human or not) sending messages to the teachable agent.
+Teachability is designed to be composable with other agent capabilities.
+To make any conversable agent teachable, instantiate both the agent and the Teachability class,
+then pass the agent to teachability.add_to_agent(agent).
+Note that teachable agents in a group chat must be given unique path_to_db_dir values.
+
+When adding Teachability to an agent, the following are modified:
+- The agent's system message is appended with a note about the agent's new ability.
+- A hook is added to the agent's `process_last_received_message` hookable method,
+and the hook potentially modifies the last of the received messages to include earlier teachings related to the message.
+Added teachings do not propagate into the stored message history.
+If new user teachings are detected, they are added to new memos in the vector database.
+
+### \_\_init\_\_
+
+```python
+def __init__(verbosity: Optional[int] = 0,
+             reset_db: Optional[bool] = False,
+             path_to_db_dir: Optional[str] = "./tmp/teachable_agent_db",
+             recall_threshold: Optional[float] = 1.5,
+             max_num_retrievals: Optional[int] = 10,
+             llm_config: Optional[Union[dict, bool]] = None)
+```
+
+**Arguments**:
+
+- `verbosity` _Optional, int_ - # 0 (default) for basic info, 1 to add memory operations, 2 for analyzer messages, 3 for memo lists.
+- `reset_db` _Optional, bool_ - True to clear the DB before starting. Default False.
+- `path_to_db_dir` _Optional, str_ - path to the directory where this particular agent's DB is stored. Default "./tmp/teachable_agent_db"
+- `recall_threshold` _Optional, float_ - The maximum distance for retrieved memos, where 0.0 is exact match. Default 1.5. Larger values allow more (but less relevant) memos to be recalled.
+- `max_num_retrievals` _Optional, int_ - The maximum number of memos to retrieve from the DB. Default 10.
+- `llm_config` _dict or False_ - llm inference configuration passed to TextAnalyzerAgent.
+  If None, TextAnalyzerAgent uses llm_config from the teachable agent.
+
+### add\_to\_agent
+
+```python
+def add_to_agent(agent: ConversableAgent)
+```
+
+Adds teachability to the given agent.
+
+### prepopulate\_db
+
+```python
+def prepopulate_db()
+```
+
+Adds a few arbitrary memos to the DB.
+
+### process\_last\_received\_message
+
+```python
+def process_last_received_message(text: Union[dict, str])
+```
+
+Appends any relevant memos to the message text, and stores any apparent teachings in new memos.
+Uses TextAnalyzerAgent to make decisions about memo storage and retrieval.
+
+## MemoStore
+
+```python
+class MemoStore()
+```
+
+Provides memory storage and retrieval for a teachable agent, using a vector database.
+Each DB entry (called a memo) is a pair of strings: an input text and an output text.
+The input text might be a question, or a task to perform.
+The output text might be an answer to the question, or advice on how to perform the task.
+Vector embeddings are currently supplied by Chroma's default Sentence Transformers.
+
+### \_\_init\_\_
+
+```python
+def __init__(verbosity: Optional[int] = 0,
+             reset: Optional[bool] = False,
+             path_to_db_dir: Optional[str] = "./tmp/teachable_agent_db")
+```
+
+**Arguments**:
+
+  - verbosity (Optional, int): 1 to print memory operations, 0 to omit them. 3+ to print memo lists.
+  - reset (Optional, bool): True to clear the DB before starting. Default False.
+  - path_to_db_dir (Optional, str): path to the directory where the DB is stored.
+
+### list\_memos
+
+```python
+def list_memos()
+```
+
+Prints the contents of MemoStore.
+
+### reset\_db
+
+```python
+def reset_db()
+```
+
+Forces immediate deletion of the DB's contents, in memory and on disk.
+
+### add\_input\_output\_pair
+
+```python
+def add_input_output_pair(input_text: str, output_text: str)
+```
+
+Adds an input-output pair to the vector DB.
+
+### get\_nearest\_memo
+
+```python
+def get_nearest_memo(query_text: str)
+```
+
+Retrieves the nearest memo to the given query text.
+
+### get\_related\_memos
+
+```python
+def get_related_memos(query_text: str, n_results: int,
+                      threshold: Union[int, float])
+```
+
+Retrieves memos that are related to the given query text within the specified distance threshold.
+
+### prepopulate
+
+```python
+def prepopulate()
+```
+
+Adds a few arbitrary examples to the vector DB, just to make retrieval less trivial.
+

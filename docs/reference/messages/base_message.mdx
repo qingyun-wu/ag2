@@ -1,0 +1,37 @@
+---
+sidebarTitle: base_message
+title: messages.base_message
+---
+
+## BaseMessage
+
+```python
+class BaseMessage(BaseModel, ABC)
+```
+
+### print
+
+```python
+def print(f: Optional[Callable[..., Any]] = None) -> None
+```
+
+Print message
+
+**Arguments**:
+
+- `f` _Optional[Callable[..., Any]], optional_ - Print function. If none, python's default print will be used.
+
+### wrap\_message
+
+```python
+def wrap_message(message_cls: type[BaseMessage]) -> type[BaseModel]
+```
+
+Wrap a message class with a type field to be used in a union type
+
+This is needed for proper serialization and deserialization of messages in a union type.
+
+**Arguments**:
+
+- `message_cls` _Type[BaseMessage]_ - Message class to wrap
+

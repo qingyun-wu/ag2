@@ -1,0 +1,132 @@
+---
+sidebarTitle: anthropic
+title: oai.anthropic
+---
+
+Create an OpenAI-compatible client for the Anthropic API.
+
+Example usage:
+Install the `anthropic` package by running `pip install --upgrade anthropic`.
+- https://docs.anthropic.com/en/docs/quickstart-guide
+
+
+Example usage for Anthropic Bedrock:
+
+Install the `anthropic` package by running `pip install --upgrade anthropic`.
+- https://docs.anthropic.com/en/docs/quickstart-guide
+
+
+Example usage for Anthropic VertexAI:
+
+Install the `anthropic` package by running `pip install anthropic[vertex]`.
+- https://docs.anthropic.com/en/docs/quickstart-guide
+
+```python
+import autogen
+
+config_list = [
+    {
+        "model": "claude-3-sonnet-20240229",
+        "api_key": os.getenv("ANTHROPIC_API_KEY"),
+        "api_type": "anthropic",
+    }
+]
+
+assistant = autogen.AssistantAgent("assistant", llm_config={"config_list": config_list})
+```
+```python
+import autogen
+
+config_list = [
+    {
+        "model": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+        "aws_access_key":<accessKey>,
+        "aws_secret_key":<secretKey>,
+        "aws_session_token":<sessionTok>,
+        "aws_region":"us-east-1",
+        "api_type": "anthropic",
+    }
+]
+
+assistant = autogen.AssistantAgent("assistant", llm_config={"config_list": config_list})
+```
+```python
+
+import autogen
+config_list = [
+    {
+        "model": "claude-3-5-sonnet-20240620-v1:0",
+        "gcp_project_id": "dummy_project_id",
+        "gcp_region": "us-west-2",
+        "gcp_auth_token": "dummy_auth_token",
+        "api_type": "anthropic",
+    }
+]
+
+assistant = autogen.AssistantAgent("assistant", llm_config={"config_list": config_list})
+```python
+
+## AnthropicClient
+
+```python
+class AnthropicClient()
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(**kwargs: Any)
+```
+
+Initialize the Anthropic API client.
+
+**Arguments**:
+
+- `api_key` _str_ - The API key for the Anthropic API or set the `ANTHROPIC_API_KEY` environment variable.
+
+### load\_config
+
+```python
+def load_config(params: dict[str, Any])
+```
+
+Load the configuration for the Anthropic API client.
+
+### cost
+
+```python
+def cost(response) -> float
+```
+
+Calculate the cost of the completion using the Anthropic pricing.
+
+### message\_retrieval
+
+```python
+def message_retrieval(response) -> list
+```
+
+Retrieve and return a list of strings or a list of Choice.Message from the response.
+
+NOTE: if a list of Choice.Message is returned, it currently needs to contain the fields of OpenAI's ChatCompletion Message object,
+since that is expected for function or tool calling in the rest of the codebase at the moment, unless a custom agent is being used.
+
+### get\_usage
+
+```python
+@staticmethod
+def get_usage(response: ChatCompletion) -> dict
+```
+
+Get the usage of tokens and their cost information.
+
+### oai\_messages\_to\_anthropic\_messages
+
+```python
+def oai_messages_to_anthropic_messages(
+        params: dict[str, Any]) -> list[dict[str, Any]]
+```
+
+Convert messages from OAI format to Anthropic format.
+We correct for any specific role orders and types, etc.
+

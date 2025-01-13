@@ -1,0 +1,125 @@
+---
+sidebarTitle: cohere
+title: oai.cohere
+---
+
+Create an OpenAI-compatible client using Cohere's API.
+
+**Example**:
+
+    ```python
+    llm_config={
+        "config_list": [{
+            "api_type": "cohere",
+            "model": "command-r-plus",
+            "api_key": os.environ.get("COHERE_API_KEY")
+            "client_name": "autogen-cohere", # Optional parameter
+            }
+    ]}
+
+    agent = autogen.AssistantAgent("my_agent", llm_config=llm_config)
+    ```
+  
+  Install Cohere's python library using: pip install --upgrade cohere
+  
+  Resources:
+  - https://docs.cohere.com/reference/chat
+
+## CohereClient
+
+```python
+class CohereClient()
+```
+
+Client for Cohere's API.
+
+### \_\_init\_\_
+
+```python
+def __init__(**kwargs)
+```
+
+Requires api_key or environment variable to be set
+
+**Arguments**:
+
+- `api_key` _str_ - The API key for using Cohere (or environment variable COHERE_API_KEY needs to be set)
+
+### message\_retrieval
+
+```python
+def message_retrieval(response) -> list
+```
+
+Retrieve and return a list of strings or a list of Choice.Message from the response.
+
+NOTE: if a list of Choice.Message is returned, it currently needs to contain the fields of OpenAI's ChatCompletion Message object,
+since that is expected for function or tool calling in the rest of the codebase at the moment, unless a custom agent is being used.
+
+### get\_usage
+
+```python
+@staticmethod
+def get_usage(response) -> dict
+```
+
+Return usage summary of the response using RESPONSE_USAGE_KEYS.
+
+### parse\_params
+
+```python
+def parse_params(params: dict[str, Any]) -> dict[str, Any]
+```
+
+Loads the parameters for Cohere API from the passed in parameters and returns a validated set. Checks types, ranges, and sets defaults
+
+### oai\_messages\_to\_cohere\_messages
+
+```python
+def oai_messages_to_cohere_messages(
+        messages: list[dict[str, Any]], params: dict[str, Any],
+        cohere_params: dict[str,
+                            Any]) -> tuple[list[dict[str, Any]], str, str]
+```
+
+Convert messages from OAI format to Cohere's format.
+We correct for any specific role orders and types.
+
+**Arguments**:
+
+- `messages` - list[Dict[str, Any]]: AutoGen messages
+- `params` - Dict[str, Any]:         AutoGen parameters dictionary
+- `cohere_params` - Dict[str, Any]:  Cohere parameters dictionary
+  
+
+**Returns**:
+
+  List[Dict[str, Any]]:   Chat History messages
+- `str` - Preamble (system message)
+- `str` - Message (the final user message)
+
+### calculate\_cohere\_cost
+
+```python
+def calculate_cohere_cost(input_tokens: int, output_tokens: int,
+                          model: str) -> float
+```
+
+Calculate the cost of the completion using the Cohere pricing.
+
+## CohereError
+
+```python
+class CohereError(Exception)
+```
+
+Base class for other Cohere exceptions
+
+## CohereRateLimitError
+
+```python
+class CohereRateLimitError(CohereError)
+```
+
+Raised when rate limit is exceeded
+

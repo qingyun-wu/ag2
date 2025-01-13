@@ -1,0 +1,28 @@
+---
+sidebarTitle: optical_character_recognition
+title: agentchat.contrib.captainagent.tools.information_retrieval.optical_character_recognition
+---
+
+### optical\_character\_recognition
+
+```python
+@with_requirements(["easyocr"], ["os"])
+def optical_character_recognition(image)
+```
+
+Perform optical character recognition (OCR) on the given image.
+
+**Arguments**:
+
+- `image` _Union[str, Image.Image]_ - The image to perform OCR on. It can be either a file path or an Image object.
+  
+
+**Returns**:
+
+- `str` - The extracted text from the image.
+  
+
+**Raises**:
+
+- `FileNotFoundError` - If the image file path does not exist.
+

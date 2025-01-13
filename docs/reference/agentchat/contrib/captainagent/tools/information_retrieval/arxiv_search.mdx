@@ -1,0 +1,31 @@
+---
+sidebarTitle: arxiv_search
+title: agentchat.contrib.captainagent.tools.information_retrieval.arxiv_search
+---
+
+### arxiv\_search
+
+```python
+@with_requirements(["arxiv"], ["arxiv"])
+def arxiv_search(query, max_results=10, sortby="relevance")
+```
+
+Search for articles on arXiv based on the given query.
+
+**Arguments**:
+
+- `query` _str_ - The search query.
+- `max_results` _int, optional_ - The maximum number of results to retrieve. Defaults to 10.
+- `sortby` _str, optional_ - The sorting criterion for the search results. Can be 'relevance' or 'submittedDate'. Defaults to 'relevance'.
+  
+
+**Returns**:
+
+- `list` - A list of dictionaries containing information about the search results. Each dictionary contains the following keys:
+  - 'title': The title of the article.
+  - 'authors': The authors of the article.
+  - 'summary': The summary of the article.
+  - 'entry_id': The entry ID of the article.
+  - 'doi': The DOI of the article (If applicable).
+  - 'published': The publication date of the article in the format 'Y-M'.
+

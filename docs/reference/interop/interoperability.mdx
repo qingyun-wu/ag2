@@ -1,0 +1,77 @@
+---
+sidebarTitle: interoperability
+title: interop.interoperability
+---
+
+## Interoperability
+
+```python
+class Interoperability()
+```
+
+A class to handle interoperability between different tool types.
+
+This class allows the conversion of tools to various interoperability classes and provides functionality
+for retrieving and registering interoperability classes.
+
+### convert\_tool
+
+```python
+@classmethod
+def convert_tool(cls, *, tool: Any, type: str, **kwargs: Any) -> Tool
+```
+
+Converts a given tool to an instance of a specified interoperability type.
+
+**Arguments**:
+
+- `tool` _Any_ - The tool object to be converted.
+- `type` _str_ - The type of interoperability to convert the tool to.
+- `**kwargs` _Any_ - Additional arguments to be passed during conversion.
+  
+
+**Returns**:
+
+- `Tool` - The converted tool.
+  
+
+**Raises**:
+
+- `ValueError` - If the interoperability class for the provided type is not found.
+
+### get\_interoperability\_class
+
+```python
+@classmethod
+def get_interoperability_class(cls, type: str) -> type[Interoperable]
+```
+
+Retrieves the interoperability class corresponding to the specified type.
+
+**Arguments**:
+
+- `type` _str_ - The type of the interoperability class to retrieve.
+  
+
+**Returns**:
+
+- `Type[Interoperable]` - The interoperability class type.
+  
+
+**Raises**:
+
+- `ValueError` - If no interoperability class is found for the provided type.
+
+### get\_supported\_types
+
+```python
+@classmethod
+def get_supported_types(cls) -> list[str]
+```
+
+Returns a sorted list of all supported interoperability types.
+
+**Returns**:
+
+- `List[str]` - A sorted list of strings representing the supported interoperability types.
+

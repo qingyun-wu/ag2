@@ -1,0 +1,30 @@
+---
+sidebarTitle: llamaindex_conversable_agent
+title: agentchat.contrib.llamaindex_conversable_agent
+---
+
+## LLamaIndexConversableAgent
+
+```python
+class LLamaIndexConversableAgent(ConversableAgent)
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(name: str,
+             llama_index_agent: AgentRunner,
+             description: Optional[str] = None,
+             **kwargs)
+```
+
+**Arguments**:
+
+- `name` _str_ - agent name.
+- `llama_index_agent` _AgentRunner_ - llama index agent.
+  Please override this attribute if you want to reprogram the agent.
+- `description` _str_ - a short description of the agent. This description is used by other agents
+  (e.g. the GroupChatManager) to decide when to call upon this agent.
+- `**kwargs` _dict_ - Please refer to other kwargs in
+  [ConversableAgent](../conversable_agent#init).
+

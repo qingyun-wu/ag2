@@ -1,0 +1,122 @@
+---
+sidebarTitle: redis_cache
+title: cache.redis_cache
+---
+
+## RedisCache
+
+```python
+class RedisCache(AbstractCache)
+```
+
+Implementation of AbstractCache using the Redis database.
+
+This class provides a concrete implementation of the AbstractCache
+interface using the Redis database for caching data.
+
+**Attributes**:
+
+- `seed` _Union[str, int]_ - A seed or namespace used as a prefix for cache keys.
+- `cache` _redis.Redis_ - The Redis client used for caching.
+  
+
+**Methods**:
+
+  __init__(self, seed, redis_url): Initializes the RedisCache with the given seed and Redis URL.
+  _prefixed_key(self, key): Internal method to get a namespaced cache key.
+  get(self, key, default=None): Retrieves an item from the cache.
+  set(self, key, value): Sets an item in the cache.
+- `close(self)` - Closes the Redis client.
+- `__enter__(self)` - Context management entry.
+  __exit__(self, exc_type, exc_value, traceback): Context management exit.
+
+### \_\_init\_\_
+
+```python
+def __init__(seed: Union[str, int], redis_url: str)
+```
+
+Initialize the RedisCache instance.
+
+**Arguments**:
+
+- `seed` _Union[str, int]_ - A seed or namespace for the cache. This is used as a prefix for all cache keys.
+- `redis_url` _str_ - The URL for the Redis server.
+
+### get
+
+```python
+def get(key: str, default: Optional[Any] = None) -> Optional[Any]
+```
+
+Retrieve an item from the Redis cache.
+
+**Arguments**:
+
+- `key` _str_ - The key identifying the item in the cache.
+- `default` _optional_ - The default value to return if the key is not found.
+  Defaults to None.
+  
+
+**Returns**:
+
+  The deserialized value associated with the key if found, else the default value.
+
+### set
+
+```python
+def set(key: str, value: Any) -> None
+```
+
+Set an item in the Redis cache.
+
+**Arguments**:
+
+- `key` _str_ - The key under which the item is to be stored.
+- `value` - The value to be stored in the cache.
+  
+
+**Notes**:
+
+  The value is serialized using pickle before being stored in Redis.
+
+### close
+
+```python
+def close() -> None
+```
+
+Close the Redis client.
+
+Perform any necessary cleanup, such as closing network connections.
+
+### \_\_enter\_\_
+
+```python
+def __enter__() -> Self
+```
+
+Enter the runtime context related to the object.
+
+**Returns**:
+
+- `self` - The instance itself.
+
+### \_\_exit\_\_
+
+```python
+def __exit__(exc_type: Optional[type[BaseException]],
+             exc_val: Optional[BaseException],
+             exc_tb: Optional[TracebackType]) -> None
+```
+
+Exit the runtime context related to the object.
+
+Perform cleanup actions such as closing the Redis client.
+
+**Arguments**:
+
+- `exc_type` - The exception type if an exception was raised in the context.
+- `exc_value` - The exception value if an exception was raised in the context.
+- `traceback` - The traceback if an exception was raised in the context.
+

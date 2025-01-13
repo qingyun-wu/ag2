@@ -1,0 +1,296 @@
+---
+sidebarTitle: transforms
+title: agentchat.contrib.capabilities.transforms
+---
+
+## MessageTransform
+
+```python
+class MessageTransform(Protocol)
+```
+
+Defines a contract for message transformation.
+
+Classes implementing this protocol should provide an `apply_transform` method
+that takes a list of messages and returns the transformed list.
+
+### apply\_transform
+
+```python
+def apply_transform(messages: list[dict]) -> list[dict]
+```
+
+Applies a transformation to a list of messages.
+
+**Arguments**:
+
+- `messages` - A list of dictionaries representing messages.
+  
+
+**Returns**:
+
+  A new list of dictionaries containing the transformed messages.
+
+### get\_logs
+
+```python
+def get_logs(pre_transform_messages: list[dict],
+             post_transform_messages: list[dict]) -> tuple[str, bool]
+```
+
+Creates the string including the logs of the transformation
+
+Alongside the string, it returns a boolean indicating whether the transformation had an effect or not.
+
+**Arguments**:
+
+- `pre_transform_messages` - A list of dictionaries representing messages before the transformation.
+- `post_transform_messages` - A list of dictionaries representig messages after the transformation.
+  
+
+**Returns**:
+
+  A tuple with a string with the logs and a flag indicating whether the transformation had an effect or not.
+
+## MessageHistoryLimiter
+
+```python
+class MessageHistoryLimiter()
+```
+
+Limits the number of messages considered by an agent for response generation.
+
+This transform keeps only the most recent messages up to the specified maximum number of messages (max_messages).
+It trims the conversation history by removing older messages, retaining only the most recent messages.
+
+### \_\_init\_\_
+
+```python
+def __init__(max_messages: Optional[int] = None,
+             keep_first_message: bool = False)
+```
+
+**Arguments**:
+
+  max_messages Optional[int]: Maximum number of messages to keep in the context. Must be greater than 0 if not None.
+  keep_first_message bool: Whether to keep the original first message in the conversation history.
+  Defaults to False.
+
+### apply\_transform
+
+```python
+def apply_transform(messages: list[dict]) -> list[dict]
+```
+
+Truncates the conversation history to the specified maximum number of messages.
+
+This method returns a new list containing the most recent messages up to the specified
+maximum number of messages (max_messages). If max_messages is None, it returns the
+original list of messages unmodified.
+
+**Arguments**:
+
+- `messages` _List[Dict]_ - The list of messages representing the conversation history.
+  
+
+**Returns**:
+
+- `List[Dict]` - A new list containing the most recent messages up to the specified maximum.
+
+## MessageTokenLimiter
+
+```python
+class MessageTokenLimiter()
+```
+
+Truncates messages to meet token limits for efficient processing and response generation.
+
+This transformation applies two levels of truncation to the conversation history:
+
+1. Truncates each individual message to the maximum number of tokens specified by max_tokens_per_message.
+2. Truncates the overall conversation history to the maximum number of tokens specified by max_tokens.
+
+NOTE: Tokens are counted using the encoder for the specified model. Different models may yield different token
+counts for the same text.
+
+NOTE: For multimodal LLMs, the token count may be inaccurate as it does not account for the non-text input
+(e.g images).
+
+The truncation process follows these steps in order:
+
+1. The minimum tokens threshold (`min_tokens`) is checked (0 by default). If the total number of tokens in messages
+are less than this threshold, then the messages are returned as is. In other case, the following process is applied.
+2. Messages are processed in reverse order (newest to oldest).
+3. Individual messages are truncated based on max_tokens_per_message. For multimodal messages containing both text
+and other types of content, only the text content is truncated.
+4. The overall conversation history is truncated based on the max_tokens limit. Once the accumulated token count
+exceeds this limit, the current message being processed get truncated to meet the total token count and any
+remaining messages get discarded.
+5. The truncated conversation history is reconstructed by prepending the messages to a new list to preserve the
+original message order.
+
+### \_\_init\_\_
+
+```python
+def __init__(max_tokens_per_message: Optional[int] = None,
+             max_tokens: Optional[int] = None,
+             min_tokens: Optional[int] = None,
+             model: str = "gpt-3.5-turbo-0613",
+             filter_dict: Optional[dict] = None,
+             exclude_filter: bool = True)
+```
+
+**Arguments**:
+
+- `max_tokens_per_message` _None or int_ - Maximum number of tokens to keep in each message.
+  Must be greater than or equal to 0 if not None.
+- `max_tokens` _Optional[int]_ - Maximum number of tokens to keep in the chat history.
+  Must be greater than or equal to 0 if not None.
+- `min_tokens` _Optional[int]_ - Minimum number of tokens in messages to apply the transformation.
+  Must be greater than or equal to 0 if not None.
+- `model` _str_ - The target OpenAI model for tokenization alignment.
+- `filter_dict` _None or dict_ - A dictionary to filter out messages that you want/don't want to compress.
+  If None, no filters will be applied.
+- `exclude_filter` _bool_ - If exclude filter is True (the default value), messages that match the filter will be
+  excluded from token truncation. If False, messages that match the filter will be truncated.
+
+### apply\_transform
+
+```python
+def apply_transform(messages: list[dict]) -> list[dict]
+```
+
+Applies token truncation to the conversation history.
+
+**Arguments**:
+
+- `messages` _List[Dict]_ - The list of messages representing the conversation history.
+  
+
+**Returns**:
+
+- `List[Dict]` - A new list containing the truncated messages up to the specified token limits.
+
+## TextMessageCompressor
+
+```python
+class TextMessageCompressor()
+```
+
+A transform for compressing text messages in a conversation history.
+
+It uses a specified text compression method to reduce the token count of messages, which can lead to more efficient
+processing and response generation by downstream models.
+
+### \_\_init\_\_
+
+```python
+def __init__(text_compressor: Optional[TextCompressor] = None,
+             min_tokens: Optional[int] = None,
+             compression_params: dict = dict(),
+             cache: Optional[AbstractCache] = None,
+             filter_dict: Optional[dict] = None,
+             exclude_filter: bool = True)
+```
+
+**Arguments**:
+
+- `text_compressor` _TextCompressor or None_ - An instance of a class that implements the TextCompressor
+  protocol. If None, it defaults to LLMLingua.
+- `min_tokens` _int or None_ - Minimum number of tokens in messages to apply the transformation. Must be greater
+  than or equal to 0 if not None. If None, no threshold-based compression is applied.
+- `compression_args` _dict_ - A dictionary of arguments for the compression method. Defaults to an empty
+  dictionary.
+- `cache` _None or AbstractCache_ - The cache client to use to store and retrieve previously compressed messages.
+  If None, no caching will be used.
+- `filter_dict` _None or dict_ - A dictionary to filter out messages that you want/don't want to compress.
+  If None, no filters will be applied.
+- `exclude_filter` _bool_ - If exclude filter is True (the default value), messages that match the filter will be
+  excluded from compression. If False, messages that match the filter will be compressed.
+
+### apply\_transform
+
+```python
+def apply_transform(messages: list[dict]) -> list[dict]
+```
+
+Applies compression to messages in a conversation history based on the specified configuration.
+
+The function processes each message according to the `compression_args` and `min_tokens` settings, applying
+the specified compression configuration and returning a new list of messages with reduced token counts
+where possible.
+
+**Arguments**:
+
+- `messages` _List[Dict]_ - A list of message dictionaries to be compressed.
+  
+
+**Returns**:
+
+- `List[Dict]` - A list of dictionaries with the message content compressed according to the configured
+  method and scope.
+
+## TextMessageContentName
+
+```python
+class TextMessageContentName()
+```
+
+A transform for including the agent's name in the content of a message.
+
+How to create and apply the transform:
+# Imports
+from autogen.agentchat.contrib.capabilities import transform_messages, transforms
+
+# Create Transform
+name_transform = transforms.TextMessageContentName(position="start", format_string="'{name}' said:
+")
+
+# Create the TransformMessages
+context_handling = transform_messages.TransformMessages(
+transforms=[
+name_transform
+]
+)
+
+# Add it to an agent so when they run inference it will apply to the messages
+context_handling.add_to_agent(my_agent)
+
+### \_\_init\_\_
+
+```python
+def __init__(position: str = "start",
+             format_string: str = "{name}:\n",
+             deduplicate: bool = True,
+             filter_dict: Optional[dict] = None,
+             exclude_filter: bool = True)
+```
+
+**Arguments**:
+
+- `position` _str_ - The position to add the name to the content. The possible options are 'start' or 'end'. Defaults to 'start'.
+- `format_string` _str_ - The f-string to format the message name with. Use '{name}' as a placeholder for the agent's name. Defaults to '{name}:
+  ' and must contain '{name}'.
+- `deduplicate` _bool_ - Whether to deduplicate the formatted string so it doesn't appear twice (sometimes the LLM will add it to new messages itself). Defaults to True.
+- `filter_dict` _None or dict_ - A dictionary to filter out messages that you want/don't want to compress.
+  If None, no filters will be applied.
+- `exclude_filter` _bool_ - If exclude filter is True (the default value), messages that match the filter will be
+  excluded from compression. If False, messages that match the filter will be compressed.
+
+### apply\_transform
+
+```python
+def apply_transform(messages: list[dict]) -> list[dict]
+```
+
+Applies the name change to the message based on the position and format string.
+
+**Arguments**:
+
+- `messages` _List[Dict]_ - A list of message dictionaries.
+  
+
+**Returns**:
+
+- `List[Dict]` - A list of dictionaries with the message content updated with names.
+

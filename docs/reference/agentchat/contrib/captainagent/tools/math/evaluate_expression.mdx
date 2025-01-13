@@ -1,0 +1,23 @@
+---
+sidebarTitle: evaluate_expression
+title: agentchat.contrib.captainagent.tools.math.evaluate_expression
+---
+
+### evaluate\_expression
+
+```python
+def evaluate_expression(expression)
+```
+
+Evaluates a mathematical expression with support for floor function notation and power notation.
+
+**Arguments**:
+
+- `expression` _str_ - The mathematical expression to evaluate. It can only contain one symbol 'x'.
+  
+
+**Returns**:
+
+  Union[sympy.Expr, str]: The evaluated result as a sympy expression if successful,
+  otherwise an error message as a string.
+

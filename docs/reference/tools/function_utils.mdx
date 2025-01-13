@@ -1,0 +1,280 @@
+---
+sidebarTitle: function_utils
+title: tools.function_utils
+---
+
+### get\_typed\_annotation
+
+```python
+def get_typed_annotation(annotation: Any, globalns: dict[str, Any]) -> Any
+```
+
+Get the type annotation of a parameter.
+
+**Arguments**:
+
+- `annotation` - The annotation of the parameter
+- `globalns` - The global namespace of the function
+  
+
+**Returns**:
+
+  The type annotation of the parameter
+
+### get\_typed\_signature
+
+```python
+def get_typed_signature(call: Callable[..., Any]) -> inspect.Signature
+```
+
+Get the signature of a function with type annotations.
+
+**Arguments**:
+
+- `call` - The function to get the signature for
+  
+
+**Returns**:
+
+  The signature of the function with type annotations
+
+### get\_typed\_return\_annotation
+
+```python
+def get_typed_return_annotation(call: Callable[..., Any]) -> Any
+```
+
+Get the return annotation of a function.
+
+**Arguments**:
+
+- `call` - The function to get the return annotation for
+  
+
+**Returns**:
+
+  The return annotation of the function
+
+### get\_param\_annotations
+
+```python
+def get_param_annotations(
+    typed_signature: inspect.Signature
+) -> dict[str, Union[Annotated[type[Any], str], type[Any]]]
+```
+
+Get the type annotations of the parameters of a function
+
+**Arguments**:
+
+- `typed_signature` - The signature of the function with type annotations
+  
+
+**Returns**:
+
+  A dictionary of the type annotations of the parameters of the function
+
+## Parameters
+
+```python
+class Parameters(BaseModel)
+```
+
+Parameters of a function as defined by the OpenAI API
+
+## Function
+
+```python
+class Function(BaseModel)
+```
+
+A function as defined by the OpenAI API
+
+## ToolFunction
+
+```python
+class ToolFunction(BaseModel)
+```
+
+A function under tool as defined by the OpenAI API.
+
+### get\_parameter\_json\_schema
+
+```python
+def get_parameter_json_schema(
+        k: str, v: Any, default_values: dict[str, Any]) -> JsonSchemaValue
+```
+
+Get a JSON schema for a parameter as defined by the OpenAI API
+
+**Arguments**:
+
+- `k` - The name of the parameter
+- `v` - The type of the parameter
+- `default_values` - The default values of the parameters of the function
+  
+
+**Returns**:
+
+  A Pydanitc model for the parameter
+
+### get\_required\_params
+
+```python
+def get_required_params(typed_signature: inspect.Signature) -> list[str]
+```
+
+Get the required parameters of a function
+
+**Arguments**:
+
+- `signature` - The signature of the function as returned by inspect.signature
+  
+
+**Returns**:
+
+  A list of the required parameters of the function
+
+### get\_default\_values
+
+```python
+def get_default_values(typed_signature: inspect.Signature) -> dict[str, Any]
+```
+
+Get default values of parameters of a function
+
+**Arguments**:
+
+- `signature` - The signature of the function as returned by inspect.signature
+  
+
+**Returns**:
+
+  A dictionary of the default values of the parameters of the function
+
+### get\_parameters
+
+```python
+def get_parameters(required: list[str],
+                   param_annotations: dict[str, Union[Annotated[type[Any],
+                                                                str],
+                                                      type[Any]]],
+                   default_values: dict[str, Any]) -> Parameters
+```
+
+Get the parameters of a function as defined by the OpenAI API
+
+**Arguments**:
+
+- `required` - The required parameters of the function
+- `hints` - The type hints of the function as returned by typing.get_type_hints
+  
+
+**Returns**:
+
+  A Pydantic model for the parameters of the function
+
+### get\_missing\_annotations
+
+```python
+def get_missing_annotations(typed_signature: inspect.Signature,
+                            required: list[str]) -> tuple[set[str], set[str]]
+```
+
+Get the missing annotations of a function
+
+Ignores the parameters with default values as they are not required to be annotated, but logs a warning.
+
+**Arguments**:
+
+- `typed_signature` - The signature of the function with type annotations
+- `required` - The required parameters of the function
+  
+
+**Returns**:
+
+  A set of the missing annotations of the function
+
+### get\_function\_schema
+
+```python
+def get_function_schema(f: Callable[..., Any],
+                        *,
+                        name: Optional[str] = None,
+                        description: str) -> dict[str, Any]
+```
+
+Get a JSON schema for a function as defined by the OpenAI API
+
+**Arguments**:
+
+- `f` - The function to get the JSON schema for
+- `name` - The name of the function
+- `description` - The description of the function
+  
+
+**Returns**:
+
+  A JSON schema for the function
+  
+
+**Raises**:
+
+- `TypeError` - If the function is not annotated
+  
+
+**Examples**:
+
+```python
+def f(a: Annotated[str, "Parameter a"], b: int = 2, c: Annotated[float, "Parameter c"] = 0.1) -> None:
+    pass
+
+
+get_function_schema(f, description="function f")
+
+#   {'type': 'function',
+#    'function': {'description': 'function f',
+#        'name': 'f',
+#        'parameters': {'type': 'object',
+#           'properties': {'a': {'type': 'str', 'description': 'Parameter a'},
+#               'b': {'type': 'int', 'description': 'b'},
+#               'c': {'type': 'float', 'description': 'Parameter c'}},
+#           'required': ['a']}}}
+```
+
+### get\_load\_param\_if\_needed\_function
+
+```python
+def get_load_param_if_needed_function(
+    t: Any
+) -> Optional[Callable[[dict[str, Any], type[BaseModel]], BaseModel]]
+```
+
+Get a function to load a parameter if it is a Pydantic model
+
+**Arguments**:
+
+- `t` - The type annotation of the parameter
+  
+
+**Returns**:
+
+  A function to load the parameter if it is a Pydantic model, otherwise None
+
+### load\_basemodels\_if\_needed
+
+```python
+def load_basemodels_if_needed(func: Callable[..., Any]) -> Callable[..., Any]
+```
+
+A decorator to load the parameters of a function if they are Pydantic models
+
+**Arguments**:
+
+- `func` - The function with annotated parameters
+  
+
+**Returns**:
+
+  A function that loads the parameters before calling the original function
+

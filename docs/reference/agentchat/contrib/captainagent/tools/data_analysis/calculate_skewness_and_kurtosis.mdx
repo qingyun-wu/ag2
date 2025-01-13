@@ -1,0 +1,24 @@
+---
+sidebarTitle: calculate_skewness_and_kurtosis
+title: agentchat.contrib.captainagent.tools.data_analysis.calculate_skewness_and_kurtosis
+---
+
+### calculate\_skewness\_and\_kurtosis
+
+```python
+def calculate_skewness_and_kurtosis(csv_file: str, column_name: str) -> tuple
+```
+
+Calculate the skewness and kurtosis of a specified column in a CSV file. The kurtosis is calculated using the Fisher definition.
+The two metrics are computed using scipy.stats functions.
+
+**Arguments**:
+
+- `csv_file` _str_ - The path to the CSV file.
+- `column_name` _str_ - The name of the column to calculate skewness and kurtosis for.
+  
+
+**Returns**:
+
+- `tuple` - (skewness, kurtosis)
+

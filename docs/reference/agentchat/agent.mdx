@@ -1,0 +1,178 @@
+---
+sidebarTitle: agent
+title: agentchat.agent
+---
+
+## Agent
+
+```python
+@runtime_checkable
+class Agent(Protocol)
+```
+
+(In preview) A protocol for Agent.
+
+An agent can communicate with other agents and perform actions.
+Different agents can differ in what actions they perform in the `receive` method.
+
+### name
+
+```python
+@property
+def name() -> str
+```
+
+The name of the agent.
+
+### description
+
+```python
+@property
+def description() -> str
+```
+
+The description of the agent. Used for the agent's introduction in
+a group chat setting.
+
+### send
+
+```python
+def send(message: Union[dict[str, Any], str],
+         recipient: "Agent",
+         request_reply: Optional[bool] = None) -> None
+```
+
+Send a message to another agent.
+
+**Arguments**:
+
+- `message` _dict or str_ - the message to send. If a dict, it should be
+  a JSON-serializable and follows the OpenAI's ChatCompletion schema.
+- `recipient` _Agent_ - the recipient of the message.
+- `request_reply` _bool_ - whether to request a reply from the recipient.
+
+### a\_send
+
+```python
+async def a_send(message: Union[dict[str, Any], str],
+                 recipient: "Agent",
+                 request_reply: Optional[bool] = None) -> None
+```
+
+(Async) Send a message to another agent.
+
+**Arguments**:
+
+- `message` _dict or str_ - the message to send. If a dict, it should be
+  a JSON-serializable and follows the OpenAI's ChatCompletion schema.
+- `recipient` _Agent_ - the recipient of the message.
+- `request_reply` _bool_ - whether to request a reply from the recipient.
+
+### receive
+
+```python
+def receive(message: Union[dict[str, Any], str],
+            sender: "Agent",
+            request_reply: Optional[bool] = None) -> None
+```
+
+Receive a message from another agent.
+
+**Arguments**:
+
+- `message` _dict or str_ - the message received. If a dict, it should be
+  a JSON-serializable and follows the OpenAI's ChatCompletion schema.
+- `sender` _Agent_ - the sender of the message.
+- `request_reply` _bool_ - whether the sender requests a reply.
+
+### a\_receive
+
+```python
+async def a_receive(message: Union[dict[str, Any], str],
+                    sender: "Agent",
+                    request_reply: Optional[bool] = None) -> None
+```
+
+(Async) Receive a message from another agent.
+
+**Arguments**:
+
+- `message` _dict or str_ - the message received. If a dict, it should be
+  a JSON-serializable and follows the OpenAI's ChatCompletion schema.
+- `sender` _Agent_ - the sender of the message.
+- `request_reply` _bool_ - whether the sender requests a reply.
+
+### generate\_reply
+
+```python
+def generate_reply(messages: Optional[list[dict[str, Any]]] = None,
+                   sender: Optional["Agent"] = None,
+                   **kwargs: Any) -> Union[str, dict[str, Any], None]
+```
+
+Generate a reply based on the received messages.
+
+**Arguments**:
+
+- `messages` _list[dict]_ - a list of messages received from other agents.
+  The messages are dictionaries that are JSON-serializable and
+  follows the OpenAI's ChatCompletion schema.
+- `sender` - sender of an Agent instance.
+  
+
+**Returns**:
+
+  str or dict or None: the generated reply. If None, no reply is generated.
+
+### a\_generate\_reply
+
+```python
+async def a_generate_reply(messages: Optional[list[dict[str, Any]]] = None,
+                           sender: Optional["Agent"] = None,
+                           **kwargs: Any) -> Union[str, dict[str, Any], None]
+```
+
+(Async) Generate a reply based on the received messages.
+
+**Arguments**:
+
+- `messages` _list[dict]_ - a list of messages received from other agents.
+  The messages are dictionaries that are JSON-serializable and
+  follows the OpenAI's ChatCompletion schema.
+- `sender` - sender of an Agent instance.
+  
+
+**Returns**:
+
+  str or dict or None: the generated reply. If None, no reply is generated.
+
+## LLMAgent
+
+```python
+@runtime_checkable
+class LLMAgent(Agent, Protocol)
+```
+
+(In preview) A protocol for an LLM agent.
+
+### system\_message
+
+```python
+@property
+def system_message() -> str
+```
+
+The system message of this agent.
+
+### update\_system\_message
+
+```python
+def update_system_message(system_message: str) -> None
+```
+
+Update this agent's system message.
+
+**Arguments**:
+
+- `system_message` _str_ - system message for inference.
+

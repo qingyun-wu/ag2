@@ -1,0 +1,177 @@
+---
+sidebarTitle: cache
+title: cache.cache
+---
+
+## Cache
+
+```python
+class Cache(AbstractCache)
+```
+
+A wrapper class for managing cache configuration and instances.
+
+This class provides a unified interface for creating and interacting with
+different types of cache (e.g., Redis, Disk). It abstracts the underlying
+cache implementation details, providing methods for cache operations.
+
+**Attributes**:
+
+- `config` _Dict[str, Any]_ - A dictionary containing cache configuration.
+- `cache` - The cache instance created based on the provided configuration.
+
+### redis
+
+```python
+@staticmethod
+def redis(cache_seed: str | int = 42,
+          redis_url: str = "redis://localhost:6379/0") -> Cache
+```
+
+Create a Redis cache instance.
+
+**Arguments**:
+
+- `cache_seed` _Union[str, int], optional_ - A seed for the cache. Defaults to 42.
+- `redis_url` _str, optional_ - The URL for the Redis server. Defaults to "redis://localhost:6379/0".
+  
+
+**Returns**:
+
+- `Cache` - A Cache instance configured for Redis.
+
+### disk
+
+```python
+@staticmethod
+def disk(cache_seed: str | int = 42, cache_path_root: str = ".cache") -> Cache
+```
+
+Create a Disk cache instance.
+
+**Arguments**:
+
+- `cache_seed` _Union[str, int], optional_ - A seed for the cache. Defaults to 42.
+- `cache_path_root` _str, optional_ - The root path for the disk cache. Defaults to ".cache".
+  
+
+**Returns**:
+
+- `Cache` - A Cache instance configured for Disk caching.
+
+### cosmos\_db
+
+```python
+@staticmethod
+def cosmos_db(connection_string: str | None = None,
+              container_id: str | None = None,
+              cache_seed: str | int = 42,
+              client: any | None = None) -> Cache
+```
+
+Create a Cosmos DB cache instance with 'autogen_cache' as database ID.
+
+**Arguments**:
+
+- `connection_string` _str, optional_ - Connection string to the Cosmos DB account.
+- `container_id` _str, optional_ - The container ID for the Cosmos DB account.
+- `cache_seed` _Union[str, int], optional_ - A seed for the cache.
+- `client` - Optional[CosmosClient]: Pass an existing Cosmos DB client.
+  
+
+**Returns**:
+
+- `Cache` - A Cache instance configured for Cosmos DB.
+
+### \_\_init\_\_
+
+```python
+def __init__(config: dict[str, Any])
+```
+
+Initialize the Cache with the given configuration.
+
+Validates the configuration keys and creates the cache instance.
+
+**Arguments**:
+
+- `config` _Dict[str, Any]_ - A dictionary containing the cache configuration.
+  
+
+**Raises**:
+
+- `ValueError` - If an invalid configuration key is provided.
+
+### \_\_enter\_\_
+
+```python
+def __enter__() -> Cache
+```
+
+Enter the runtime context related to the cache object.
+
+**Returns**:
+
+  The cache instance for use within a context block.
+
+### \_\_exit\_\_
+
+```python
+def __exit__(exc_type: type[BaseException] | None,
+             exc_value: BaseException | None,
+             traceback: TracebackType | None) -> None
+```
+
+Exit the runtime context related to the cache object.
+
+Cleans up the cache instance and handles any exceptions that occurred
+within the context.
+
+**Arguments**:
+
+- `exc_type` - The exception type if an exception was raised in the context.
+- `exc_value` - The exception value if an exception was raised in the context.
+- `traceback` - The traceback if an exception was raised in the context.
+
+### get
+
+```python
+def get(key: str, default: Any | None = None) -> Any | None
+```
+
+Retrieve an item from the cache.
+
+**Arguments**:
+
+- `key` _str_ - The key identifying the item in the cache.
+- `default` _optional_ - The default value to return if the key is not found.
+  Defaults to None.
+  
+
+**Returns**:
+
+  The value associated with the key if found, else the default value.
+
+### set
+
+```python
+def set(key: str, value: Any) -> None
+```
+
+Set an item in the cache.
+
+**Arguments**:
+
+- `key` _str_ - The key under which the item is to be stored.
+- `value` - The value to be stored in the cache.
+
+### close
+
+```python
+def close() -> None
+```
+
+Close the cache.
+
+Perform any necessary cleanup, such as closing connections or releasing resources.
+

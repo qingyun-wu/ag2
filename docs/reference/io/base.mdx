@@ -1,0 +1,130 @@
+---
+sidebarTitle: base
+title: io.base
+---
+
+## OutputStream
+
+```python
+@runtime_checkable
+class OutputStream(Protocol)
+```
+
+### print
+
+```python
+def print(*objects: Any,
+          sep: str = " ",
+          end: str = "\n",
+          flush: bool = False) -> None
+```
+
+Print data to the output stream.
+
+**Arguments**:
+
+- `objects` _any_ - The data to print.
+- `sep` _str, optional_ - The separator between objects. Defaults to " ".
+- `end` _str, optional_ - The end of the output. Defaults to "
+  ".
+- `flush` _bool, optional_ - Whether to flush the output. Defaults to False.
+
+### send
+
+```python
+def send(message: BaseMessage) -> None
+```
+
+Send data to the output stream.
+
+**Arguments**:
+
+- `message` _BaseMessage_ - BaseMessage from autogen.messages.base_message
+
+## InputStream
+
+```python
+@runtime_checkable
+class InputStream(Protocol)
+```
+
+### input
+
+```python
+def input(prompt: str = "", *, password: bool = False) -> str
+```
+
+Read a line from the input stream.
+
+**Arguments**:
+
+- `prompt` _str, optional_ - The prompt to display. Defaults to "".
+- `password` _bool, optional_ - Whether to read a password. Defaults to False.
+  
+
+**Returns**:
+
+- `str` - The line read from the input stream.
+
+## IOStream
+
+```python
+@runtime_checkable
+class IOStream(InputStream, OutputStream, Protocol)
+```
+
+A protocol for input/output streams.
+
+### set\_global\_default
+
+```python
+@staticmethod
+def set_global_default(stream: "IOStream") -> None
+```
+
+Set the default input/output stream.
+
+**Arguments**:
+
+- `stream` _IOStream_ - The input/output stream to set as the default.
+
+### get\_global\_default
+
+```python
+@staticmethod
+def get_global_default() -> "IOStream"
+```
+
+Get the default input/output stream.
+
+**Returns**:
+
+- `IOStream` - The default input/output stream.
+
+### get\_default
+
+```python
+@staticmethod
+def get_default() -> "IOStream"
+```
+
+Get the default input/output stream.
+
+**Returns**:
+
+- `IOStream` - The default input/output stream.
+
+### set\_default
+
+```python
+@staticmethod
+@contextmanager
+def set_default(stream: Optional["IOStream"]) -> Iterator[None]
+```
+
+Set the default input/output stream.
+
+**Arguments**:
+
+- `stream` _IOStream_ - The input/output stream to set as the default.
+

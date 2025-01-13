@@ -1,0 +1,84 @@
+---
+sidebarTitle: falkor_graph_query_engine
+title: agentchat.contrib.graph_rag.falkor_graph_query_engine
+---
+
+## FalkorGraphQueryEngine
+
+```python
+class FalkorGraphQueryEngine()
+```
+
+This is a wrapper for FalkorDB KnowledgeGraph.
+
+### \_\_init\_\_
+
+```python
+def __init__(name: str,
+             host: str = "127.0.0.1",
+             port: int = 6379,
+             username: str | None = None,
+             password: str | None = None,
+             model: GenerativeModel = OpenAiGenerativeModel("gpt-4o"),
+             ontology: Ontology | None = None)
+```
+
+Initialize a FalkorDB knowledge graph.
+Please also refer to https://github.com/FalkorDB/GraphRAG-SDK/blob/main/graphrag_sdk/kg.py
+
+TODO: Fix LLM API cost calculation for FalkorDB useages.
+
+**Arguments**:
+
+- `name` _str_ - Knowledge graph name.
+- `host` _str_ - FalkorDB hostname.
+- `port` _int_ - FalkorDB port number.
+- `username` _str|None_ - FalkorDB username.
+- `password` _str|None_ - FalkorDB password.
+- `model` _GenerativeModel_ - LLM model to use for FalkorDB to build and retrieve from the graph, default to use OAI gpt-4o.
+- `ontology` - FalkorDB knowledge graph schema/ontology, https://github.com/FalkorDB/GraphRAG-SDK/blob/main/graphrag_sdk/ontology.py
+  If None, FalkorDB will auto generate an ontology from the input docs.
+
+### connect\_db
+
+```python
+def connect_db()
+```
+
+Connect to an existing knowledge graph.
+
+### init\_db
+
+```python
+def init_db(input_doc: list[Document])
+```
+
+Build the knowledge graph with input documents.
+
+### query
+
+```python
+def query(question: str,
+          n_results: int = 1,
+          **kwargs) -> GraphStoreQueryResult
+```
+
+Query the knowledge graph with a question and optional message history.
+
+**Arguments**:
+
+- `question` - a human input question.
+- `n_results` - number of returned results.
+  kwargs:
+- `messages` - a list of message history.
+  
+- `Returns` - FalkorGraphQueryResult
+
+### delete
+
+```python
+def delete() -> bool
+```
+
+Delete graph and its data from database.
+

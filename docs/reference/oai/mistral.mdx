@@ -1,0 +1,82 @@
+---
+sidebarTitle: mistral
+title: oai.mistral
+---
+
+Create an OpenAI-compatible client using Mistral.AI's API.
+
+**Example**:
+
+    ```python
+    llm_config = {
+        "config_list": [
+            {"api_type": "mistral", "model": "open-mixtral-8x22b", "api_key": os.environ.get("MISTRAL_API_KEY")}
+        ]
+    }
+
+    agent = autogen.AssistantAgent("my_agent", llm_config=llm_config)
+    ```
+  
+  Install Mistral.AI python library using: pip install --upgrade mistralai
+  
+  Resources:
+  - https://docs.mistral.ai/getting-started/quickstart/
+  
+- `NOTE` - Requires mistralai package version >= 1.0.1
+
+## MistralAIClient
+
+```python
+class MistralAIClient()
+```
+
+Client for Mistral.AI's API.
+
+### \_\_init\_\_
+
+```python
+def __init__(**kwargs)
+```
+
+Requires api_key or environment variable to be set
+
+**Arguments**:
+
+- `api_key` _str_ - The API key for using Mistral.AI (or environment variable MISTRAL_API_KEY needs to be set)
+
+### message\_retrieval
+
+```python
+def message_retrieval(
+        response: ChatCompletion
+) -> Union[list[str], list[ChatCompletionMessage]]
+```
+
+Retrieve the messages from the response.
+
+### parse\_params
+
+```python
+def parse_params(params: dict[str, Any]) -> dict[str, Any]
+```
+
+Loads the parameters for Mistral.AI API from the passed in parameters and returns a validated set. Checks types, ranges, and sets defaults
+
+### tool\_def\_to\_mistral
+
+```python
+def tool_def_to_mistral(
+        tool_definitions: list[dict[str, Any]]) -> list[dict[str, Any]]
+```
+
+Converts AutoGen tool definition to a mistral tool format
+
+### calculate\_mistral\_cost
+
+```python
+def calculate_mistral_cost(input_tokens: int, output_tokens: int,
+                           model_name: str) -> float
+```
+
+Calculate the cost of the mistral response.
+

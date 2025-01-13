@@ -1,0 +1,183 @@
+---
+sidebarTitle: local_commandline_code_executor
+title: coding.local_commandline_code_executor
+---
+
+## LocalCommandLineCodeExecutor
+
+```python
+class LocalCommandLineCodeExecutor(CodeExecutor)
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(timeout: int = 60,
+             virtual_env_context: Optional[SimpleNamespace] = None,
+             work_dir: Union[Path, str] = Path(),
+             functions: list[Union[FunctionWithRequirements[Any, A],
+                                   Callable[..., Any],
+                                   FunctionWithRequirementsStr]] = [],
+             functions_module: str = "functions",
+             execution_policies: Optional[dict[str, bool]] = None)
+```
+
+(Experimental) A code executor class that executes or saves LLM generated code a local command line
+environment.
+
+**This will execute or save LLM generated code on the local machine.**
+
+Each code block is saved as a file in the working directory. Depending on the execution policy,
+the code may be executed in a separate process.
+The code blocks are executed or save in the order they are received.
+Command line code is sanitized against a list of dangerous commands to prevent self-destructive commands from being executed,
+which could potentially affect the user's environment. Supported languages include Python, shell scripts (bash, shell, sh),
+PowerShell (pwsh, powershell, ps1), HTML, CSS, and JavaScript.
+Execution policies determine whether each language's code blocks are executed or saved only.
+
+## Execution with a Python virtual environment
+A python virtual env can be used to execute code and install dependencies. This has the added benefit of not polluting the
+base environment with unwanted modules.
+
+```python
+from autogen.code_utils import create_virtual_env
+from autogen.coding import LocalCommandLineCodeExecutor
+
+venv_dir = ".venv"
+venv_context = create_virtual_env(venv_dir)
+
+executor = LocalCommandLineCodeExecutor(virtual_env_context=venv_context)
+```
+
+**Arguments**:
+
+- `timeout` _int_ - The timeout for code execution, default is 60 seconds.
+- `virtual_env_context` _Optional[SimpleNamespace]_ - The virtual environment context to use.
+- `work_dir` _Union[Path, str]_ - The working directory for code execution, defaults to the current directory.
+- `functions` _List[Union[FunctionWithRequirements[Any, A], Callable[..., Any], FunctionWithRequirementsStr]]_ - A list of callable functions available to the executor.
+- `functions_module` _str_ - The module name under which functions are accessible.
+- `execution_policies` _Optional[Dict[str, bool]]_ - A dictionary mapping languages to execution policies (True for execution, False for saving only). Defaults to class-wide DEFAULT_EXECUTION_POLICY.
+
+### format\_functions\_for\_prompt
+
+```python
+def format_functions_for_prompt(
+        prompt_template: str = FUNCTION_PROMPT_TEMPLATE) -> str
+```
+
+(Experimental) Format the functions for a prompt.
+
+The template includes two variables:
+- `$module_name`: The module name.
+- `$functions`: The functions formatted as stubs with two newlines between each function.
+
+**Arguments**:
+
+- `prompt_template` _str_ - The prompt template. Default is the class default.
+  
+
+**Returns**:
+
+- `str` - The formatted prompt.
+
+### functions\_module
+
+```python
+@property
+def functions_module() -> str
+```
+
+(Experimental) The module name for the functions.
+
+### functions
+
+```python
+@property
+def functions() -> list[Union[FunctionWithRequirements[Any, A], Callable[
+    ..., Any], FunctionWithRequirementsStr]]
+```
+
+(Experimental) The functions that are available to the code executor.
+
+### timeout
+
+```python
+@property
+def timeout() -> int
+```
+
+(Experimental) The timeout for code execution.
+
+### work\_dir
+
+```python
+@property
+def work_dir() -> Path
+```
+
+(Experimental) The working directory for the code execution.
+
+### code\_extractor
+
+```python
+@property
+def code_extractor() -> CodeExtractor
+```
+
+(Experimental) Export a code extractor that can be used by an agent.
+
+### sanitize\_command
+
+```python
+@staticmethod
+def sanitize_command(lang: str, code: str) -> None
+```
+
+Sanitize the code block to prevent dangerous commands.
+This approach acknowledges that while Docker or similar
+containerization/sandboxing technologies provide a robust layer of security,
+not all users may have Docker installed or may choose not to use it.
+Therefore, having a baseline level of protection helps mitigate risks for users who,
+either out of choice or necessity, run code outside of a sandboxed environment.
+
+### execute\_code\_blocks
+
+```python
+def execute_code_blocks(code_blocks: list[CodeBlock]) -> CommandLineCodeResult
+```
+
+(Experimental) Execute the code blocks and return the result.
+
+**Arguments**:
+
+- `code_blocks` _List[CodeBlock]_ - The code blocks to execute.
+  
+
+**Returns**:
+
+- `CommandLineCodeResult` - The result of the code execution.
+
+### restart
+
+```python
+def restart() -> None
+```
+
+(Experimental) Restart the code executor.
+
+## LocalCommandlineCodeExecutor
+
+```python
+class LocalCommandlineCodeExecutor(metaclass=_DeprecatedClassMeta)
+```
+
+LocalCommandlineCodeExecutor renamed to LocalCommandLineCodeExecutor
+
+## CommandlineCodeResult
+
+```python
+class CommandlineCodeResult(metaclass=_DeprecatedClassMeta)
+```
+
+CommandlineCodeResult renamed to CommandLineCodeResult
+

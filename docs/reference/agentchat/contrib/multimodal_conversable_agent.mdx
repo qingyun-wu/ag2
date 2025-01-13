@@ -1,0 +1,53 @@
+---
+sidebarTitle: multimodal_conversable_agent
+title: agentchat.contrib.multimodal_conversable_agent
+---
+
+## MultimodalConversableAgent
+
+```python
+class MultimodalConversableAgent(ConversableAgent)
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(name: str,
+             system_message: Optional[Union[str, list]] = DEFAULT_LMM_SYS_MSG,
+             is_termination_msg: str = None,
+             *args,
+             **kwargs)
+```
+
+**Arguments**:
+
+- `name` _str_ - agent name.
+- `system_message` _str_ - system message for the OpenAIWrapper inference.
+  Please override this attribute if you want to reprogram the agent.
+- `**kwargs` _dict_ - Please refer to other kwargs in
+  [ConversableAgent](../conversable_agent#init).
+
+### update\_system\_message
+
+```python
+def update_system_message(system_message: Union[dict, list, str])
+```
+
+Update the system message.
+
+**Arguments**:
+
+- `system_message` _str_ - system message for the OpenAIWrapper inference.
+
+### generate\_oai\_reply
+
+```python
+def generate_oai_reply(
+    messages: Optional[list[dict]] = None,
+    sender: Optional[Agent] = None,
+    config: Optional[OpenAIWrapper] = None
+) -> tuple[bool, Union[str, dict, None]]
+```
+
+Generate a reply using autogen.oai.
+

@@ -1,0 +1,85 @@
+---
+sidebarTitle: realtime_client
+title: agentchat.realtime_agent.realtime_client
+---
+
+## RealtimeClientProtocol
+
+```python
+@runtime_checkable
+class RealtimeClientProtocol(Protocol)
+```
+
+### send\_function\_result
+
+```python
+async def send_function_result(call_id: str, result: str) -> None
+```
+
+Send the result of a function call to a Realtime API.
+
+**Arguments**:
+
+- `call_id` _str_ - The ID of the function call.
+- `result` _str_ - The result of the function call.
+
+### send\_text
+
+```python
+async def send_text(*, role: Role, text: str) -> None
+```
+
+Send a text message to a Realtime API.
+
+**Arguments**:
+
+- `role` _str_ - The role of the message.
+- `text` _str_ - The text of the message.
+
+### send\_audio
+
+```python
+async def send_audio(audio: str) -> None
+```
+
+Send audio to a Realtime API.
+
+**Arguments**:
+
+- `audio` _str_ - The audio to send.
+
+### truncate\_audio
+
+```python
+async def truncate_audio(audio_end_ms: int, content_index: int,
+                         item_id: str) -> None
+```
+
+Truncate audio in a Realtime API.
+
+**Arguments**:
+
+- `audio_end_ms` _int_ - The end of the audio to truncate.
+- `content_index` _int_ - The index of the content to truncate.
+- `item_id` _str_ - The ID of the item to truncate.
+
+### session\_update
+
+```python
+async def session_update(session_options: dict[str, Any]) -> None
+```
+
+Send a session update to a Realtime API.
+
+**Arguments**:
+
+- `session_options` _dict[str, Any]_ - The session options to update.
+
+### read\_events
+
+```python
+def read_events() -> AsyncGenerator[dict[str, Any], None]
+```
+
+Read messages from a Realtime API.
+

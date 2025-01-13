@@ -1,0 +1,37 @@
+---
+sidebarTitle: exception_utils
+title: exception_utils
+---
+
+## NoEligibleSpeaker
+
+```python
+class NoEligibleSpeaker(Exception)
+```
+
+Exception raised for early termination of a GroupChat.
+
+## SenderRequired
+
+```python
+class SenderRequired(Exception)
+```
+
+Exception raised when the sender is required but not provided.
+
+## InvalidCarryOverType
+
+```python
+class InvalidCarryOverType(Exception)
+```
+
+Exception raised when the carryover type is invalid.
+
+## UndefinedNextAgent
+
+```python
+class UndefinedNextAgent(Exception)
+```
+
+Exception raised when the provided next agents list does not overlap with agents in the group.
+

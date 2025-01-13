@@ -1,0 +1,61 @@
+---
+sidebarTitle: graph_query_engine
+title: agentchat.contrib.graph_rag.graph_query_engine
+---
+
+## GraphStoreQueryResult
+
+```python
+@dataclass
+class GraphStoreQueryResult()
+```
+
+A wrapper of graph store query results.
+
+answer: human readable answer to question/query.
+results: intermediate results to question/query, e.g. node entities.
+
+## GraphQueryEngine
+
+```python
+class GraphQueryEngine(Protocol)
+```
+
+An abstract base class that represents a graph query engine on top of a underlying graph database.
+
+This interface defines the basic methods for graph-based RAG.
+
+### init\_db
+
+```python
+def init_db(input_doc: list[Document] | None = None)
+```
+
+This method initializes graph database with the input documents or records.
+Usually, it takes the following steps,
+1. connecting to a graph database.
+2. extract graph nodes, edges based on input data, graph schema and etc.
+3. build indexes etc.
+
+**Arguments**:
+
+- `input_doc` - a list of input documents that are used to build the graph in database.
+
+### add\_records
+
+```python
+def add_records(new_records: list) -> bool
+```
+
+Add new records to the underlying database and add to the graph if required.
+
+### query
+
+```python
+def query(question: str,
+          n_results: int = 1,
+          **kwargs) -> GraphStoreQueryResult
+```
+
+This method transform a string format question into database query and return the result.
+

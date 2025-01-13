@@ -1,0 +1,99 @@
+---
+sidebarTitle: client_messages
+title: messages.client_messages
+---
+
+## ModelUsageSummary
+
+```python
+class ModelUsageSummary(BaseModel)
+```
+
+Model usage summary.
+
+#### model
+
+Model name.
+
+#### completion\_tokens
+
+Number of tokens used for completion.
+
+#### cost
+
+Cost of the completion.
+
+#### prompt\_tokens
+
+Number of tokens used for prompt.
+
+#### total\_tokens
+
+Total number of tokens used.
+
+## ActualUsageSummary
+
+```python
+class ActualUsageSummary(BaseModel)
+```
+
+Actual usage summary.
+
+#### usages
+
+List of model usage summaries.
+
+#### total\_cost
+
+Total cost.
+
+## TotalUsageSummary
+
+```python
+class TotalUsageSummary(BaseModel)
+```
+
+Total usage summary.
+
+#### usages
+
+List of model usage summaries.
+
+#### total\_cost
+
+Total cost.
+
+## UsageSummaryMessage
+
+```python
+@wrap_message
+class UsageSummaryMessage(BaseMessage)
+```
+
+Usage summary message.
+
+#### actual
+
+Actual usage summary.
+
+#### total
+
+Total usage summary.
+
+#### mode
+
+Mode to display the usage summary.
+
+## StreamMessage
+
+```python
+@wrap_message
+class StreamMessage(BaseMessage)
+```
+
+Stream message.
+
+#### content
+
+Content of the message.
+

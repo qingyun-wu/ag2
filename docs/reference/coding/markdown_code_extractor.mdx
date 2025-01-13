@@ -1,0 +1,34 @@
+---
+sidebarTitle: markdown_code_extractor
+title: coding.markdown_code_extractor
+---
+
+## MarkdownCodeExtractor
+
+```python
+class MarkdownCodeExtractor(CodeExtractor)
+```
+
+(Experimental) A class that extracts code blocks from a message using Markdown syntax.
+
+### extract\_code\_blocks
+
+```python
+def extract_code_blocks(
+    message: Union[str, list[Union[UserMessageTextContentPart,
+                                   UserMessageImageContentPart]], None]
+) -> list[CodeBlock]
+```
+
+(Experimental) Extract code blocks from a message. If no code blocks are found,
+return an empty list.
+
+**Arguments**:
+
+- `message` _str_ - The message to extract code blocks from.
+  
+
+**Returns**:
+
+- `List[CodeBlock]` - The extracted code blocks or an empty list.
+

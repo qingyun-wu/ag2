@@ -1,0 +1,42 @@
+---
+sidebarTitle: docker_jupyter_server
+title: coding.jupyter.docker_jupyter_server
+---
+
+## DockerJupyterServer
+
+```python
+class DockerJupyterServer(JupyterConnectable)
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(*,
+             custom_image_name: str | None = None,
+             container_name: str | None = None,
+             auto_remove: bool = True,
+             stop_container: bool = True,
+             docker_env: dict[str, str] = {},
+             token: str | GenerateToken = GenerateToken())
+```
+
+Start a Jupyter kernel gateway server in a Docker container.
+
+**Arguments**:
+
+- `custom_image_name` _Optional[str], optional_ - Custom image to use. If this is None,
+  then the bundled image will be built and used. The default image is based on
+  quay.io/jupyter/docker-stacks-foundation and extended to include jupyter_kernel_gateway
+- `container_name` _Optional[str], optional_ - Name of the container to start.
+  A name will be generated if None.
+- `auto_remove` _bool, optional_ - If true the Docker container will be deleted
+  when it is stopped.
+- `stop_container` _bool, optional_ - If true the container will be stopped,
+  either by program exit or using the context manager
+- `docker_env` _Dict[str, str], optional_ - Extra environment variables to pass
+  to the running Docker container.
+- `token` _Union[str, GenerateToken], optional_ - Token to use for authentication.
+  If GenerateToken is used, a random token will be generated. Empty string
+  will be unauthenticated.
+

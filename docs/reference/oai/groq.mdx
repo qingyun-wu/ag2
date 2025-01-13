@@ -1,0 +1,89 @@
+---
+sidebarTitle: groq
+title: oai.groq
+---
+
+Create an OpenAI-compatible client using Groq's API.
+
+**Example**:
+
+    ```python
+    llm_config = {
+        "config_list": [{"api_type": "groq", "model": "mixtral-8x7b-32768", "api_key": os.environ.get("GROQ_API_KEY")}]
+    }
+
+    agent = autogen.AssistantAgent("my_agent", llm_config=llm_config)
+    ```
+  
+  Install Groq's python library using: pip install --upgrade groq
+  
+  Resources:
+  - https://console.groq.com/docs/quickstart
+
+## GroqClient
+
+```python
+class GroqClient()
+```
+
+Client for Groq's API.
+
+### \_\_init\_\_
+
+```python
+def __init__(**kwargs)
+```
+
+Requires api_key or environment variable to be set
+
+**Arguments**:
+
+- `api_key` _str_ - The API key for using Groq (or environment variable GROQ_API_KEY needs to be set)
+
+### message\_retrieval
+
+```python
+def message_retrieval(response) -> list
+```
+
+Retrieve and return a list of strings or a list of Choice.Message from the response.
+
+NOTE: if a list of Choice.Message is returned, it currently needs to contain the fields of OpenAI's ChatCompletion Message object,
+since that is expected for function or tool calling in the rest of the codebase at the moment, unless a custom agent is being used.
+
+### get\_usage
+
+```python
+@staticmethod
+def get_usage(response) -> dict
+```
+
+Return usage summary of the response using RESPONSE_USAGE_KEYS.
+
+### parse\_params
+
+```python
+def parse_params(params: dict[str, Any]) -> dict[str, Any]
+```
+
+Loads the parameters for Groq API from the passed in parameters and returns a validated set. Checks types, ranges, and sets defaults
+
+### oai\_messages\_to\_groq\_messages
+
+```python
+def oai_messages_to_groq_messages(
+        messages: list[dict[str, Any]]) -> list[dict[str, Any]]
+```
+
+Convert messages from OAI format to Groq's format.
+We correct for any specific role orders and types.
+
+### calculate\_groq\_cost
+
+```python
+def calculate_groq_cost(input_tokens: int, output_tokens: int,
+                        model: str) -> float
+```
+
+Calculate the cost of the completion using the Groq pricing.
+

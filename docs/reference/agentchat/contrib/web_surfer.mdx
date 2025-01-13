@@ -1,0 +1,25 @@
+---
+sidebarTitle: web_surfer
+title: agentchat.contrib.web_surfer
+---
+
+## WebSurferAgent
+
+```python
+class WebSurferAgent(ConversableAgent)
+```
+
+(In preview) An agent that acts as a basic web surfer that can search the web and visit web pages.
+
+### generate\_surfer\_reply
+
+```python
+def generate_surfer_reply(
+    messages: Optional[list[dict[str, str]]] = None,
+    sender: Optional[Agent] = None,
+    config: Optional[OpenAIWrapper] = None
+) -> tuple[bool, Optional[Union[str, dict[str, str]]]]
+```
+
+Generate a reply using autogen.oai.
+

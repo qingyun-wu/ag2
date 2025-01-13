@@ -1,0 +1,83 @@
+---
+sidebarTitle: client_utils
+title: oai.client_utils
+---
+
+Utilities for client classes
+
+### validate\_parameter
+
+```python
+def validate_parameter(params: dict[str, Any], param_name: str,
+                       allowed_types: tuple, allow_None: bool,
+                       default_value: Any, numerical_bound: tuple,
+                       allowed_values: list) -> Any
+```
+
+Validates a given config parameter, checking its type, values, and setting defaults
+
+**Arguments**:
+
+- `params` _Dict[str, Any]_ - Dictionary containing parameters to validate.
+- `param_name` _str_ - The name of the parameter to validate.
+- `allowed_types` _Tuple_ - Tuple of acceptable types for the parameter.
+- `allow_None` _bool_ - Whether the parameter can be `None`.
+- `default_value` _Any_ - The default value to use if the parameter is invalid or missing.
+  numerical_bound (Optional[Tuple[Optional[float], Optional[float]]]):
+  A tuple specifying the lower and upper bounds for numerical parameters.
+  Each bound can be `None` if not applicable.
+- `allowed_values` _Optional[List[Any]]_ - A list of acceptable values for the parameter.
+  Can be `None` if no specific values are required.
+  
+
+**Returns**:
+
+- `Any` - The validated parameter value or the default value if validation fails.
+  
+
+**Raises**:
+
+- `TypeError` - If `allowed_values` is provided but is not a list.
+  
+  Example Usage:
+```python
+    # Validating a numerical parameter within specific bounds
+    params = {"temperature": 0.5, "safety_model": "Meta-Llama/Llama-Guard-7b"}
+    temperature = validate_parameter(params, "temperature", (int, float), True, 0.7, (0, 1), None)
+    # Result: 0.5
+
+    # Validating a parameter that can be one of a list of allowed values
+    model = validate_parameter(
+    params, "safety_model", str, True, None, None, ["Meta-Llama/Llama-Guard-7b", "Meta-Llama/Llama-Guard-13b"]
+    )
+    # If "safety_model" is missing or invalid in params, defaults to "default"
+```
+
+### should\_hide\_tools
+
+```python
+def should_hide_tools(messages: list[dict[str, Any]], tools: list[dict[str,
+                                                                       Any]],
+                      hide_tools_param: str) -> bool
+```
+
+Determines if tools should be hidden. This function is used to hide tools when they have been run, minimising the chance of the LLM choosing them when they shouldn't.
+
+**Arguments**:
+
+- `messages` _List[Dict[str, Any]]_ - List of messages
+- `tools` _List[Dict[str, Any]]_ - List of tools
+- `hide_tools_param` _str_ - "hide_tools" parameter value. Can be "if_all_run" (hide tools if all tools have been run), "if_any_run" (hide tools if any of the tools have been run), "never" (never hide tools). Default is "never".
+  
+
+**Returns**:
+
+- `bool` - Indicates whether the tools should be excluded from the response create request
+  
+  Example Usage:
+```python
+    # Validating a numerical parameter within specific bounds
+    messages = params.get("messages", [])
+    tools = params.get("tools", None)
+    hide_tools = should_hide_tools(messages, tools, params["hide_tools"])
+

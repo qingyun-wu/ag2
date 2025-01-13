@@ -1,0 +1,103 @@
+---
+sidebarTitle: file_logger
+title: logger.file_logger
+---
+
+## FileLogger
+
+```python
+class FileLogger(BaseLogger)
+```
+
+### start
+
+```python
+def start() -> str
+```
+
+Start the logger and return the session_id.
+
+### log\_chat\_completion
+
+```python
+def log_chat_completion(invocation_id: uuid.UUID, client_id: int,
+                        wrapper_id: int, source: str | Agent,
+                        request: dict[str, float | str | list[dict[str, str]]],
+                        response: str | ChatCompletion, is_cached: int,
+                        cost: float, start_time: str) -> None
+```
+
+Log a chat completion.
+
+### log\_new\_agent
+
+```python
+def log_new_agent(agent: ConversableAgent,
+                  init_args: dict[str, Any] = {}) -> None
+```
+
+Log a new agent instance.
+
+### log\_event
+
+```python
+def log_event(source: str | Agent, name: str, **kwargs: dict[str,
+                                                             Any]) -> None
+```
+
+Log an event from an agent or a string source.
+
+### log\_new\_wrapper
+
+```python
+def log_new_wrapper(
+        wrapper: OpenAIWrapper,
+        init_args: dict[str, LLMConfig | list[LLMConfig]] = {}) -> None
+```
+
+Log a new wrapper instance.
+
+### log\_new\_client
+
+```python
+def log_new_client(client: (AzureOpenAI
+                            | OpenAI
+                            | CerebrasClient
+                            | GeminiClient
+                            | AnthropicClient
+                            | MistralAIClient
+                            | TogetherClient
+                            | GroqClient
+                            | CohereClient
+                            | OllamaClient
+                            | BedrockClient), wrapper: OpenAIWrapper,
+                   init_args: dict[str, Any]) -> None
+```
+
+Log a new client instance.
+
+### log\_function\_use
+
+```python
+def log_function_use(source: str | Agent, function: F, args: dict[str, Any],
+                     returns: Any) -> None
+```
+
+Log a registered function(can be a tool) use from an agent or a string source.
+
+### get\_connection
+
+```python
+def get_connection() -> None
+```
+
+Method is intentionally left blank because there is no specific connection needed for the FileLogger.
+
+### stop
+
+```python
+def stop() -> None
+```
+
+Close the file handler and remove it from the logger.
+

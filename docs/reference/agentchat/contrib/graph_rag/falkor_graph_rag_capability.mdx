@@ -1,0 +1,33 @@
+---
+sidebarTitle: falkor_graph_rag_capability
+title: agentchat.contrib.graph_rag.falkor_graph_rag_capability
+---
+
+## FalkorGraphRagCapability
+
+```python
+class FalkorGraphRagCapability(GraphRagCapability)
+```
+
+The FalkorDB GraphRAG capability integrate FalkorDB with graphrag_sdk version: 0.1.3b0.
+Ref: https://github.com/FalkorDB/GraphRAG-SDK/tree/2-move-away-from-sql-to-json-ontology-detection
+
+For usage, please refer to example notebook/agentchat_graph_rag_falkordb.ipynb
+
+### \_\_init\_\_
+
+```python
+def __init__(query_engine: FalkorGraphQueryEngine)
+```
+
+Initialize GraphRAG capability with a graph query engine
+
+### add\_to\_agent
+
+```python
+def add_to_agent(agent: UserProxyAgent)
+```
+
+Add FalkorDB GraphRAG capability to a UserProxyAgent.
+The restriction to a UserProxyAgent to make sure the returned message does not contain information retrieved from the graph DB instead of any LLMs.
+

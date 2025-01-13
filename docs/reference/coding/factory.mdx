@@ -1,0 +1,40 @@
+---
+sidebarTitle: factory
+title: coding.factory
+---
+
+## CodeExecutorFactory
+
+```python
+class CodeExecutorFactory()
+```
+
+(Experimental) A factory class for creating code executors.
+
+### create
+
+```python
+@staticmethod
+def create(code_execution_config: CodeExecutionConfig) -> CodeExecutor
+```
+
+(Experimental) Get a code executor based on the code execution config.
+
+**Arguments**:
+
+- `code_execution_config` _Dict_ - The code execution config,
+  which is a dictionary that must contain the key "executor".
+  The value of the key "executor" can be either a string
+  or an instance of CodeExecutor, in which case the code
+  executor is returned directly.
+  
+
+**Returns**:
+
+- `CodeExecutor` - The code executor.
+  
+
+**Raises**:
+
+- `ValueError` - If the code executor is unknown or not specified.
+

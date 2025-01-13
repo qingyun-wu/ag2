@@ -1,0 +1,95 @@
+---
+sidebarTitle: ollama
+title: oai.ollama
+---
+
+Create an OpenAI-compatible client using Ollama's API.
+
+**Example**:
+
+    ```python
+    llm_config = {"config_list": [{"api_type": "ollama", "model": "mistral:7b-instruct-v0.3-q6_K"}]}
+
+    agent = autogen.AssistantAgent("my_agent", llm_config=llm_config)
+    ```
+  
+  Install Ollama's python library using: pip install --upgrade ollama
+  Install fix-busted-json library: pip install --upgrade fix-busted-json
+  
+  Resources:
+  - https://github.com/ollama/ollama-python
+
+## OllamaClient
+
+```python
+class OllamaClient()
+```
+
+Client for Ollama's API.
+
+### \_\_init\_\_
+
+```python
+def __init__(**kwargs)
+```
+
+Note that no api_key or environment variable is required for Ollama.
+
+**Arguments**:
+
+  None
+
+### message\_retrieval
+
+```python
+def message_retrieval(response) -> list
+```
+
+Retrieve and return a list of strings or a list of Choice.Message from the response.
+
+NOTE: if a list of Choice.Message is returned, it currently needs to contain the fields of OpenAI's ChatCompletion Message object,
+since that is expected for function or tool calling in the rest of the codebase at the moment, unless a custom agent is being used.
+
+### get\_usage
+
+```python
+@staticmethod
+def get_usage(response) -> dict
+```
+
+Return usage summary of the response using RESPONSE_USAGE_KEYS.
+
+### parse\_params
+
+```python
+def parse_params(params: dict[str, Any]) -> dict[str, Any]
+```
+
+Loads the parameters for Ollama API from the passed in parameters and returns a validated set. Checks types, ranges, and sets defaults
+
+### oai\_messages\_to\_ollama\_messages
+
+```python
+def oai_messages_to_ollama_messages(messages: list[dict[str, Any]],
+                                    tools: list) -> list[dict[str, Any]]
+```
+
+Convert messages from OAI format to Ollama's format.
+We correct for any specific role orders and types, and convert tools to messages (as Ollama can't use tool messages)
+
+### response\_to\_tool\_call
+
+```python
+def response_to_tool_call(response_string: str) -> Any
+```
+
+Attempts to convert the response to an object, aimed to align with function format `[{},{}]`
+
+### is\_valid\_tool\_call\_item
+
+```python
+def is_valid_tool_call_item(call_item: dict) -> bool
+```
+
+Check that a dictionary item has at least 'name', optionally 'arguments' and no other keys to match a tool call JSON
+

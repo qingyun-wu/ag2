@@ -1,0 +1,471 @@
+---
+custom_edit_url: https://github.com/ag2ai/ag2/edit/main/notebook/agentchat_tabular_data_rag_workflow.ipynb
+description: Agentic RAG workflow on tabular data from a PDF file
+source_notebook: /notebook/agentchat_tabular_data_rag_workflow.ipynb
+tags:
+- RAG
+- groupchat
+title: Agentic RAG workflow on tabular data from a PDF file
+---
+
+<a href="https://colab.research.google.com/github/ag2ai/ag2/blob/main/notebook/agentchat_tabular_data_rag_workflow.ipynb" class="colab-badge" target="_blank"><img noZoom src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a>
+<a href="https://github.com/ag2ai/ag2/blob/main/notebook/agentchat_tabular_data_rag_workflow.ipynb" class="github-badge" target="_blank"><img noZoom src="https://img.shields.io/badge/Open%20on%20GitHub-grey?logo=github" alt="Open on GitHub" /></a>
+
+
+
+
+In this notebook, we’re building a workflow to extract accurate tabular
+data information from a PDF file.
+
+The following bullets summarize the notebook, with highlights being:
+
+-   Parse the PDF file and extract tables into images (optional).
+-   A single RAG agent fails to get the accurate information from
+    tabular data.
+-   An agentic workflow using a groupchat is able to extract information
+    accurately:
+    -   the agentic workflow uses a RAG agent to extract document
+        metadata (e.g. the image of a data table using just the table
+        name)
+    -   the table image is converted to Markdown through a multi-modal
+        agent
+    -   finally, an assistant agent answers the original question with
+        an LLM
+
+
+<div class="info Requirements">
+<Info>
+Unstructured-IO is a dependency for this notebook to parse the PDF. Please install AG2 (with the neo4j extra) and the dependencies:
+
+- Install Poppler https://pdf2image.readthedocs.io/en/latest/installation.html
+- Install Tesseract https://tesseract-ocr.github.io/tessdoc/Installation.html
+- pip install ag2[neo4j], unstructured==0.16.11, pi-heif==0.21.0, unstructured_inference==0.8.1, unstructured.pytesseract==0.3.13, pytesseract==0.3.13
+</Info>
+</div>
+
+
+### Set Configuration and OpenAI API Key
+
+```python
+import os
+
+import autogen
+
+config_list = autogen.config_list_from_json(
+    "OAI_CONFIG_LIST",
+    filter_dict={
+        "model": ["gpt-4o"],
+    },
+)
+os.environ["OPENAI_API_KEY"] = config_list[0]["api_key"]
+```
+
+### Parse PDF file
+
+**Skip and use parsed files to run the rest.** This step is expensive
+and time consuming, please skip if you don’t need to generate the full
+data set. The **estimated cost is from \$10 to \$15 to parse the pdf
+file and build the knowledge graph with entire parsed output**.
+
+For the notebook, we use a common finanical document, [Nvidia 2024
+10-K](https://investor.nvidia.com/financial-info/sec-filings/sec-filings-details/default.aspx?FilingId=17293267)
+as an example ([file download
+link](https://d18rn0p25nwr6d.cloudfront.net/CIK-0001045810/1cbe8fe7-e08a-46e3-8dcc-b429fc06c1a4.pdf)).
+
+We use Unstructured-IO to parse the PDF, the table and image from the
+PDF are extracted out as .jpg files.
+
+All parsed output are saved in a JSON file.
+
+```python
+from unstructured.partition.pdf import partition_pdf
+from unstructured.staging.base import elements_to_json
+
+file_elements = partition_pdf(
+    filename="./input_files/nvidia_10k_2024.pdf",
+    strategy="hi_res",
+    languages=["eng"],
+    infer_table_structure=True,
+    extract_images_in_pdf=True,
+    extract_image_block_output_dir="./parsed_pdf_info",
+    extract_image_block_types=["Image", "Table"],
+    extract_forms=False,
+    form_extraction_skip_tables=False,
+)
+
+elements_to_json(elements=file_elements, filename="parsed_elements.json", encoding="utf-8")
+```
+
+#### Create sample dataset
+
+```python
+import json
+
+output_elements = []
+keys_to_extract = ["element_id", "text", "type"]
+metadata_keys = ["page_number", "parent_id", "image_path"]
+text_types = set(["Text", "UncategorizedText", "NarrativeText"])
+element_length = len(file_elements)
+for idx in range(element_length):
+    data = file_elements[idx].to_dict()
+    new_data = {key: data[key] for key in keys_to_extract}
+    metadata = data["metadata"]
+    for key in metadata_keys:
+        if key in metadata:
+            new_data[key] = metadata[key]
+    if data["type"] == "Table":
+        if idx > 0:
+            pre_data = file_elements[idx - 1].to_dict()
+            if pre_data["type"] in text_types:
+                new_data["text"] = pre_data["text"] + new_data["text"]
+        if idx < element_length - 1:
+            post_data = file_elements[idx + 1].to_dict()
+            if post_data["type"] in text_types:
+                new_data["text"] = new_data["text"] + post_data["text"]
+    output_elements.append(new_data)
+
+with open("proessed_elements.json", "w", encoding="utf-8") as file:
+    json.dump(output_elements, file, indent=4)
+```
+
+### Imports
+
+**If you want to skip the parsing of the PDF file, you can start here.**
+
+```python
+# This is needed to allow nested asyncio calls for Neo4j in Jupyter
+import nest_asyncio
+
+nest_asyncio.apply()
+
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.llms.openai import OpenAI
+
+from autogen import AssistantAgent, ConversableAgent, UserProxyAgent
+
+# load documents
+from autogen.agentchat.contrib.graph_rag.document import Document, DocumentType
+from autogen.agentchat.contrib.graph_rag.neo4j_graph_query_engine import Neo4jGraphQueryEngine
+from autogen.agentchat.contrib.graph_rag.neo4j_graph_rag_capability import Neo4jGraphCapability
+from autogen.agentchat.contrib.multimodal_conversable_agent import MultimodalConversableAgent
+```
+
+### Create a knowledge graph with sample data
+
+To save time and cost, we use a small subset of the data for the
+notebook.
+
+**This does not change the fact that the native RAG agent solution
+failed to provide the correct answer.**
+
+```python
+input_path = "./agentchat_pdf_rag/sample_elements.json"
+input_documents = [
+    Document(doctype=DocumentType.JSON, path_or_url=input_path),
+]
+
+query_engine = Neo4jGraphQueryEngine(
+    username="neo4j",  # Change if you reset username
+    password="password",  # Change if you reset password
+    host="bolt://172.17.0.3",  # Change
+    port=7687,  # if needed
+    llm=OpenAI(model="gpt-4o", temperature=0.0),  # Default, no need to specify
+    embedding=OpenAIEmbedding(model_name="text-embedding-3-small"),  # except you want to use a different model
+    database="neo4j",  # Change if you want to store the graphh in your custom database
+)
+
+# query_engine._clear()
+# Ingest data and create a new property graph
+query_engine.init_db(input_doc=input_documents)
+```
+
+``` text
+Parsing nodes:   0%|          | 0/1 [00:00<?, ?it/s]
+```
+
+``` text
+Extracting paths from text with schema: 100%|██████████| 1/1 [00:06<00:00,  6.96s/it]
+Extracting and inferring knowledge graph from text: 100%|██████████| 1/1 [00:06<00:00,  6.77s/it]
+Generating embeddings: 100%|██████████| 1/1 [00:00<00:00,  3.30it/s]
+Generating embeddings: 100%|██████████| 1/1 [00:03<00:00,  3.54s/it]
+```
+
+### Connect to knowledge graph if it is built
+
+```python
+query_engine = Neo4jGraphQueryEngine(
+    username="neo4j",
+    password="password",
+    host="bolt://172.17.0.3",
+    port=7687,
+    database="neo4j",
+)
+
+query_engine.connect_db()
+```
+
+### Native RAG Agent Solution
+
+The following shows that when use a native RAG agent for parsed data,
+the agent failed to get the right information (5,282 instead of 4,430).
+
+Our best guess is that RAG agent fails to understand the table structure
+from text.
+
+```python
+rag_agent = ConversableAgent(
+    name="nvidia_rag",
+    human_input_mode="NEVER",
+)
+
+# Associate the capability with the agent
+graph_rag_capability = Neo4jGraphCapability(query_engine)
+graph_rag_capability.add_to_agent(rag_agent)
+
+# Create a user proxy agent to converse with our RAG agent
+user_proxy = UserProxyAgent(
+    name="user_proxy",
+    human_input_mode="ALWAYS",
+)
+
+user_proxy.initiate_chat(rag_agent, message="Could you list all tables from the document and its image_path?")
+```
+
+``` text
+user_proxy (to nvidia_rag):
+
+Could you list all tables from the document and its image_path?
+
+--------------------------------------------------------------------------------
+nvidia_rag (to user_proxy):
+
+Certainly! Here is the table from the document along with its image path:
+
+1. Table: NVIDIA Corporation and Subsidiaries Consolidated Balance Sheets (In millions, except value)
+   - Image Path: ./parsed_pdf_info/table-52-17.jpg
+
+--------------------------------------------------------------------------------
+user_proxy (to nvidia_rag):
+
+what is goodwill asset (in millions) for 2024?
+
+--------------------------------------------------------------------------------
+nvidia_rag (to user_proxy):
+
+The goodwill asset for NVIDIA Corporation in 2024 is $5,282 million.
+
+--------------------------------------------------------------------------------
+```
+
+``` text
+ChatResult(chat_id=None, chat_history=[{'content': 'Could you list all tables from the document and its image_path?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': 'Certainly! Here is the table from the document along with its image path:\n\n1. Table: NVIDIA Corporation and Subsidiaries Consolidated Balance Sheets (In millions, except value)\n   - Image Path: ./parsed_pdf_info/table-52-17.jpg', 'role': 'user', 'name': 'nvidia_rag'}, {'content': 'what is goodwill asset (in millions) for 2024?', 'role': 'assistant', 'name': 'user_proxy'}, {'content': 'The goodwill asset for NVIDIA Corporation in 2024 is $5,282 million.', 'role': 'user', 'name': 'nvidia_rag'}], summary='The goodwill asset for NVIDIA Corporation in 2024 is $5,282 million.', cost={'usage_including_cached_inference': {'total_cost': 0}, 'usage_excluding_cached_inference': {'total_cost': 0}}, human_input=['what is goodwill asset (in millions) for 2024?', 'exit'])
+```
+
+### Agentic RAG workflow for tabular data
+
+From the above example, when asked the goodwill asset (in millions) of
+the table NVIDIA Corporation and Subsidiaries Consolidated Balance
+Sheets, the answer was wrong. The correct figure from the table is
+\$4,430 million instead of \$4,400 million. To enhance the RAG
+performance from the tabular data, we introduce the enhanced workflow.
+
+The workflow consists a group of agent and use groupchat to coordinate.
+It breaks the RAG into 3 mains steps, 1. it finds the parsed image of
+the corresponding table. 2. it converts the image to table in structured
+Markdown format. 3. With the table in Markdown, the workflow answer the
+question with the correct data.
+
+```python
+llm_config = {
+    "cache_seed": 42,  # change the cache_seed for different trials
+    "temperature": 1,
+    "config_list": config_list,
+    "timeout": 120,
+}
+
+user_proxy = UserProxyAgent(
+    name="User_proxy",
+    system_message="A human admin.",
+    human_input_mode="ALWAYS",  # Try between ALWAYS or NEVER
+    code_execution_config=False,
+)
+
+table_assistant = AssistantAgent(
+    name="table_assistant",
+    system_message="""You are a helpful assistant.
+    You will extract the table name from the message and reply with "Find image_path for Table: {table_name}".
+    For example, when you got message "What is column data in table XYZ?",
+    you will reply "Find image_path for Table: XYZ"
+    """,
+    llm_config=llm_config,
+    human_input_mode="NEVER",  # Never ask for human input.
+)
+
+rag_agent = ConversableAgent(
+    name="nvidia_rag",
+    human_input_mode="NEVER",
+)
+
+# Associate the capability with the agent
+graph_rag_capability = Neo4jGraphCapability(query_engine)
+graph_rag_capability.add_to_agent(rag_agent)
+
+img_folder = "/workspaces/ag2/notebook/agentchat_pdf_rag/parsed_pdf_info"
+
+img_request_format = ConversableAgent(
+    name="img_request_format",
+    system_message=f"""You are a helpful assistant.
+    You will extract the table_file_name from the message and reply with "Please extract table from the following image and convert it to Markdown.
+    <img {img_folder}/table_file_name>.".
+    For example, when you got message "The image path for the table titled XYZ is "./parsed_pdf_info/abcde".",
+    you will reply "Please extract table from the following image and convert it to Markdown.
+    <img {img_folder}/abcde>."
+    """,
+    llm_config=llm_config,
+    human_input_mode="NEVER",
+)
+
+image2table_convertor = MultimodalConversableAgent(
+    name="image2table_convertor",
+    system_message="""
+    You are an image to table convertor. You will process an image of one or multiple consecutive tables.
+    You need to follow the following steps in sequence,
+    1. extract the complete table contents and structure.
+    2. Make sure the structure is complete and no information is left out. Otherwise, start from step 1 again.
+    3. Correct typos in the text fields.
+    4. In the end, output the table(s) in Markdown.
+    """,
+    llm_config={"config_list": config_list, "max_tokens": 300},
+    human_input_mode="NEVER",
+    max_consecutive_auto_reply=1,
+)
+
+conclusion = AssistantAgent(
+    name="conclusion",
+    system_message="""You are a helpful assistant.
+    Base on the history of the groupchat, answer the original question from User_proxy.
+    """,
+    llm_config=llm_config,
+    human_input_mode="NEVER",  # Never ask for human input.
+)
+```
+
+
+```python
+groupchat = autogen.GroupChat(
+    agents=[
+        user_proxy,
+        table_assistant,
+        rag_agent,
+        img_request_format,
+        image2table_convertor,
+        conclusion,
+    ],
+    messages=[],
+    speaker_selection_method="round_robin",
+)
+manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
+chat_result = user_proxy.initiate_chat(
+    manager,
+    message="What is goodwill asset (in millions) for 2024 in table NVIDIA Corporation and Subsidiaries Consolidated Balance Sheets?",
+)
+```
+
+``` text
+User_proxy (to chat_manager):
+
+What is goodwill asset (in millions) for 2024 in table NVIDIA Corporation and Subsidiaries Consolidated Balance Sheets?
+
+--------------------------------------------------------------------------------
+
+Next speaker: table_assistant
+
+table_assistant (to chat_manager):
+
+Find image_path for Table: NVIDIA Corporation and Subsidiaries Consolidated Balance Sheets
+
+--------------------------------------------------------------------------------
+
+Next speaker: nvidia_rag
+
+nvidia_rag (to chat_manager):
+
+The image path for the table titled "NVIDIA Corporation and Subsidiaries Consolidated Balance Sheets" is "./parsed_pdf_info/table-52-17.jpg".
+
+--------------------------------------------------------------------------------
+
+Next speaker: img_request_format
+
+img_request_format (to chat_manager):
+
+Please extract table from the following image and convert it to Markdown.
+<img /workspaces/ag2/notebook/agentchat_pdf_rag/parsed_pdf_info/table-52-17.jpg>.
+
+--------------------------------------------------------------------------------
+
+Next speaker: image2table_convertor
+
+image2table_convertor (to chat_manager):
+
+Here is the extracted table from the image in Markdown format:
+
+```markdown
+|                                          | Jan 28, 2024 | Jan 29, 2023 |
+|------------------------------------------|--------------|--------------|
+| **Assets**                               |              |              |
+| Current assets:                          |              |              |
+| &nbsp;&nbsp;&nbsp; Cash and cash equivalents | $7,280       | $3,389       |
+| &nbsp;&nbsp;&nbsp; Marketable securities  | $18,704      | $9,907       |
+| &nbsp;&nbsp;&nbsp; Accounts receivable, net | $9,999       | $3,827       |
+| &nbsp;&nbsp;&nbsp; Inventories            | $5,282       | $5,159       |
+| &nbsp;&nbsp;&nbsp; Prepaid expenses and other current assets | $3,080       | $791         |
+| Total current assets                     | $44,345      | $23,073      |
+| Property and equipment, net              | $3,914       | $3,807       |
+| Operating lease assets                   | $1,346       | $1,038       |
+| Goodwill                                 | $4,430       | $4,372       |
+| Intangible assets, net                   | $1,112       | $1,676       |
+| Deferred income tax assets               | $6,081       | $3,396       |
+
+
+--------------------------------------------------------------------------------
+
+Next speaker: conclusion
+
+conclusion (to chat_manager):
+
+The goodwill asset for NVIDIA Corporation as of January 28, 2024, is $4,430 million.
+
+--------------------------------------------------------------------------------
+
+Next speaker: User_proxy
+
+User_proxy (to chat_manager):
+
+What is the total current assets from the table NVIDIA Corporation and Subsidiaries Consolidated Balance Sheets?
+
+--------------------------------------------------------------------------------
+
+Next speaker: table_assistant
+
+table_assistant (to chat_manager):
+
+The total current assets from the table "NVIDIA Corporation and Subsidiaries Consolidated Balance Sheets" are $44,345 million as of January 28, 2024.
+
+--------------------------------------------------------------------------------
+
+Next speaker: nvidia_rag
+
+nvidia_rag (to chat_manager):
+
+Yes, that's correct! The total current assets for NVIDIA Corporation and Subsidiaries as of January 28, 2024, are $44,345 million, according to the table "NVIDIA Corporation and Subsidiaries Consolidated Balance Sheets." If you have any more questions or need further details, feel free to ask!
+
+--------------------------------------------------------------------------------
+
+Next speaker: img_request_format
+
+img_request_format (to chat_manager):
+
+Great, if you have any more questions or need further clarification, feel free to ask!
+
+--------------------------------------------------------------------------------
+```

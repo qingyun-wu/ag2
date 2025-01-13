@@ -1,0 +1,309 @@
+{
+  "items": [
+    {
+      "items": [
+        {
+          "items": [
+            {
+              "items": [
+                "reference/agentchat/contrib/agent_eval/agent_eval",
+                "reference/agentchat/contrib/agent_eval/criterion",
+                "reference/agentchat/contrib/agent_eval/critic_agent",
+                "reference/agentchat/contrib/agent_eval/quantifier_agent",
+                "reference/agentchat/contrib/agent_eval/subcritic_agent",
+                "reference/agentchat/contrib/agent_eval/task"
+              ],
+              "label": "agentchat.contrib.agent_eval",
+              "type": "category"
+            },
+            {
+              "items": [
+                "reference/agentchat/contrib/capabilities/agent_capability",
+                "reference/agentchat/contrib/capabilities/generate_images",
+                "reference/agentchat/contrib/capabilities/teachability",
+                "reference/agentchat/contrib/capabilities/text_compressors",
+                "reference/agentchat/contrib/capabilities/transform_messages",
+                "reference/agentchat/contrib/capabilities/transforms",
+                "reference/agentchat/contrib/capabilities/transforms_util",
+                "reference/agentchat/contrib/capabilities/vision_capability"
+              ],
+              "label": "agentchat.contrib.capabilities",
+              "type": "category"
+            },
+            {
+              "items": [
+                {
+                  "items": [
+                    {
+                      "items": [
+                        "reference/agentchat/contrib/captainagent/tools/data_analysis/calculate_correlation",
+                        "reference/agentchat/contrib/captainagent/tools/data_analysis/calculate_skewness_and_kurtosis",
+                        "reference/agentchat/contrib/captainagent/tools/data_analysis/detect_outlier_iqr",
+                        "reference/agentchat/contrib/captainagent/tools/data_analysis/detect_outlier_zscore",
+                        "reference/agentchat/contrib/captainagent/tools/data_analysis/explore_csv",
+                        "reference/agentchat/contrib/captainagent/tools/data_analysis/shapiro_wilk_test"
+                      ],
+                      "label": "agentchat.contrib.captainagent.tools.data_analysis",
+                      "type": "category"
+                    },
+                    {
+                      "items": [
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/arxiv_download",
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/arxiv_search",
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/extract_pdf_image",
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/extract_pdf_text",
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/get_wikipedia_text",
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/get_youtube_caption",
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/image_qa",
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/optical_character_recognition",
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/perform_web_search",
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/scrape_wikipedia_tables",
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/transcribe_audio_file",
+                        "reference/agentchat/contrib/captainagent/tools/information_retrieval/youtube_download"
+                      ],
+                      "label": "agentchat.contrib.captainagent.tools.information_retrieval",
+                      "type": "category"
+                    },
+                    {
+                      "items": [
+                        "reference/agentchat/contrib/captainagent/tools/math/calculate_circle_area_from_diameter",
+                        "reference/agentchat/contrib/captainagent/tools/math/calculate_day_of_the_week",
+                        "reference/agentchat/contrib/captainagent/tools/math/calculate_fraction_sum",
+                        "reference/agentchat/contrib/captainagent/tools/math/calculate_matrix_power",
+                        "reference/agentchat/contrib/captainagent/tools/math/calculate_reflected_point",
+                        "reference/agentchat/contrib/captainagent/tools/math/complex_numbers_product",
+                        "reference/agentchat/contrib/captainagent/tools/math/compute_currency_conversion",
+                        "reference/agentchat/contrib/captainagent/tools/math/count_distinct_permutations",
+                        "reference/agentchat/contrib/captainagent/tools/math/evaluate_expression",
+                        "reference/agentchat/contrib/captainagent/tools/math/find_continuity_point",
+                        "reference/agentchat/contrib/captainagent/tools/math/fraction_to_mixed_numbers",
+                        "reference/agentchat/contrib/captainagent/tools/math/modular_inverse_sum",
+                        "reference/agentchat/contrib/captainagent/tools/math/simplify_mixed_numbers",
+                        "reference/agentchat/contrib/captainagent/tools/math/sum_of_digit_factorials",
+                        "reference/agentchat/contrib/captainagent/tools/math/sum_of_primes_below"
+                      ],
+                      "label": "agentchat.contrib.captainagent.tools.math",
+                      "type": "category"
+                    }
+                  ],
+                  "label": "agentchat.contrib.captainagent.tools",
+                  "type": "category"
+                },
+                "reference/agentchat/contrib/captainagent/agent_builder",
+                "reference/agentchat/contrib/captainagent/captainagent",
+                "reference/agentchat/contrib/captainagent/tool_retriever"
+              ],
+              "label": "agentchat.contrib.captainagent",
+              "type": "category"
+            },
+            {
+              "items": [
+                "reference/agentchat/contrib/graph_rag/document",
+                "reference/agentchat/contrib/graph_rag/falkor_graph_query_engine",
+                "reference/agentchat/contrib/graph_rag/falkor_graph_rag_capability",
+                "reference/agentchat/contrib/graph_rag/graph_query_engine",
+                "reference/agentchat/contrib/graph_rag/graph_rag_capability",
+                "reference/agentchat/contrib/graph_rag/neo4j_graph_query_engine",
+                "reference/agentchat/contrib/graph_rag/neo4j_graph_rag_capability",
+                "reference/agentchat/contrib/graph_rag/neo4j_native_graph_query_engine",
+                "reference/agentchat/contrib/graph_rag/neo4j_native_graph_rag_capability"
+              ],
+              "label": "agentchat.contrib.graph_rag",
+              "type": "category"
+            },
+            {
+              "items": [
+                "reference/agentchat/contrib/vectordb/base",
+                "reference/agentchat/contrib/vectordb/chromadb",
+                "reference/agentchat/contrib/vectordb/mongodb",
+                "reference/agentchat/contrib/vectordb/pgvectordb",
+                "reference/agentchat/contrib/vectordb/qdrant",
+                "reference/agentchat/contrib/vectordb/utils"
+              ],
+              "label": "agentchat.contrib.vectordb",
+              "type": "category"
+            },
+            "reference/agentchat/contrib/agent_optimizer",
+            "reference/agentchat/contrib/gpt_assistant_agent",
+            "reference/agentchat/contrib/img_utils",
+            "reference/agentchat/contrib/llamaindex_conversable_agent",
+            "reference/agentchat/contrib/llava_agent",
+            "reference/agentchat/contrib/math_user_proxy_agent",
+            "reference/agentchat/contrib/multimodal_conversable_agent",
+            "reference/agentchat/contrib/qdrant_retrieve_user_proxy_agent",
+            "reference/agentchat/contrib/reasoning_agent",
+            "reference/agentchat/contrib/retrieve_assistant_agent",
+            "reference/agentchat/contrib/retrieve_user_proxy_agent",
+            "reference/agentchat/contrib/society_of_mind_agent",
+            "reference/agentchat/contrib/swarm_agent",
+            "reference/agentchat/contrib/text_analyzer_agent",
+            "reference/agentchat/contrib/web_surfer"
+          ],
+          "label": "agentchat.contrib",
+          "type": "category"
+        },
+        {
+          "items": [
+            "reference/agentchat/realtime_agent/function_observer",
+            "reference/agentchat/realtime_agent/oai_realtime_client",
+            "reference/agentchat/realtime_agent/realtime_agent",
+            "reference/agentchat/realtime_agent/realtime_client",
+            "reference/agentchat/realtime_agent/realtime_observer",
+            "reference/agentchat/realtime_agent/twilio_audio_adapter",
+            "reference/agentchat/realtime_agent/websocket_audio_adapter"
+          ],
+          "label": "agentchat.realtime_agent",
+          "type": "category"
+        },
+        "reference/agentchat/agent",
+        "reference/agentchat/assistant_agent",
+        "reference/agentchat/chat",
+        "reference/agentchat/conversable_agent",
+        "reference/agentchat/groupchat",
+        "reference/agentchat/user_proxy_agent",
+        "reference/agentchat/utils"
+      ],
+      "label": "agentchat",
+      "type": "category"
+    },
+    {
+      "items": [
+        "reference/cache/abstract_cache_base",
+        "reference/cache/cache",
+        "reference/cache/cache_factory",
+        "reference/cache/cosmos_db_cache",
+        "reference/cache/disk_cache",
+        "reference/cache/in_memory_cache",
+        "reference/cache/redis_cache"
+      ],
+      "label": "cache",
+      "type": "category"
+    },
+    {
+      "items": [
+        {
+          "items": [
+            "reference/coding/jupyter/base",
+            "reference/coding/jupyter/docker_jupyter_server",
+            "reference/coding/jupyter/embedded_ipython_code_executor",
+            "reference/coding/jupyter/helpers",
+            "reference/coding/jupyter/jupyter_client",
+            "reference/coding/jupyter/jupyter_code_executor",
+            "reference/coding/jupyter/local_jupyter_server"
+          ],
+          "label": "coding.jupyter",
+          "type": "category"
+        },
+        "reference/coding/base",
+        "reference/coding/docker_commandline_code_executor",
+        "reference/coding/factory",
+        "reference/coding/func_with_reqs",
+        "reference/coding/local_commandline_code_executor",
+        "reference/coding/markdown_code_extractor",
+        "reference/coding/utils"
+      ],
+      "label": "coding",
+      "type": "category"
+    },
+    {
+      "items": [
+        {
+          "items": [
+            "reference/interop/crewai/crewai"
+          ],
+          "label": "interop.crewai",
+          "type": "category"
+        },
+        {
+          "items": [
+            "reference/interop/langchain/langchain"
+          ],
+          "label": "interop.langchain",
+          "type": "category"
+        },
+        {
+          "items": [
+            "reference/interop/pydantic_ai/pydantic_ai",
+            "reference/interop/pydantic_ai/pydantic_ai_tool"
+          ],
+          "label": "interop.pydantic_ai",
+          "type": "category"
+        },
+        "reference/interop/interoperability",
+        "reference/interop/interoperable",
+        "reference/interop/registry"
+      ],
+      "label": "interop",
+      "type": "category"
+    },
+    {
+      "items": [
+        "reference/io/base",
+        "reference/io/console",
+        "reference/io/websockets"
+      ],
+      "label": "io",
+      "type": "category"
+    },
+    {
+      "items": [
+        "reference/logger/base_logger",
+        "reference/logger/file_logger",
+        "reference/logger/logger_factory",
+        "reference/logger/logger_utils",
+        "reference/logger/sqlite_logger"
+      ],
+      "label": "logger",
+      "type": "category"
+    },
+    {
+      "items": [
+        "reference/messages/agent_messages",
+        "reference/messages/base_message",
+        "reference/messages/client_messages",
+        "reference/messages/print_message"
+      ],
+      "label": "messages",
+      "type": "category"
+    },
+    {
+      "items": [
+        "reference/oai/anthropic",
+        "reference/oai/bedrock",
+        "reference/oai/cerebras",
+        "reference/oai/client",
+        "reference/oai/client_utils",
+        "reference/oai/cohere",
+        "reference/oai/completion",
+        "reference/oai/gemini",
+        "reference/oai/groq",
+        "reference/oai/mistral",
+        "reference/oai/ollama",
+        "reference/oai/openai_utils",
+        "reference/oai/together"
+      ],
+      "label": "oai",
+      "type": "category"
+    },
+    {
+      "items": [
+        "reference/tools/dependency_injection",
+        "reference/tools/function_utils",
+        "reference/tools/tool"
+      ],
+      "label": "tools",
+      "type": "category"
+    },
+    "reference/browser_utils",
+    "reference/code_utils",
+    "reference/exception_utils",
+    "reference/graph_utils",
+    "reference/math_utils",
+    "reference/retrieve_utils",
+    "reference/runtime_logging",
+    "reference/token_count_utils",
+    "reference/types"
+  ],
+  "label": "Reference",
+  "type": "category"
+}

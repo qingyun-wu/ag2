@@ -1,0 +1,24 @@
+---
+sidebarTitle: scrape_wikipedia_tables
+title: agentchat.contrib.captainagent.tools.information_retrieval.scrape_wikipedia_tables
+---
+
+### scrape\_wikipedia\_tables
+
+```python
+def scrape_wikipedia_tables(url: str, header_keyword: str)
+```
+
+Scrapes Wikipedia tables based on a given URL and header keyword.
+
+**Arguments**:
+
+- `url` - The URL of the Wikipedia page to scrape.
+- `header_keyword` - The keyword to search for in the headers of the page.
+  
+
+**Returns**:
+
+- `list` - A list of lists representing the scraped table data. Each inner list represents a row in the table,
+  with each element representing a cell value.
+

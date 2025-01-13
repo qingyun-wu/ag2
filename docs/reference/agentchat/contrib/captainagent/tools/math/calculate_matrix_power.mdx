@@ -1,0 +1,29 @@
+---
+sidebarTitle: calculate_matrix_power
+title: agentchat.contrib.captainagent.tools.math.calculate_matrix_power
+---
+
+### calculate\_matrix\_power
+
+```python
+@with_requirements(["sympy"])
+def calculate_matrix_power(matrix, power)
+```
+
+Calculate the power of a given matrix.
+
+**Arguments**:
+
+- `matrix` _list_ - An array of numbers that represents the matrix.
+- `power` _int_ - The power to which the matrix is raised.
+  
+
+**Returns**:
+
+- `Matrix` - The resulting matrix after raising to power.
+  
+
+**Raises**:
+
+- `ValueError` - If the power is negative and the matrix is not invertible.
+

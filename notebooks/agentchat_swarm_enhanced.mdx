@@ -1,0 +1,853 @@
+---
+custom_edit_url: https://github.com/ag2ai/ag2/edit/main/notebook/agentchat_swarm_enhanced.ipynb
+description: Swarm Ochestration
+source_notebook: /notebook/agentchat_swarm_enhanced.ipynb
+tags:
+- orchestration
+- group chat
+- swarm
+title: Enhanced Swarm Orchestration with AG2
+---
+
+<a href="https://colab.research.google.com/github/ag2ai/ag2/blob/main/notebook/agentchat_swarm_enhanced.ipynb" class="colab-badge" target="_blank"><img noZoom src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a>
+<a href="https://github.com/ag2ai/ag2/blob/main/notebook/agentchat_swarm_enhanced.ipynb" class="github-badge" target="_blank"><img noZoom src="https://img.shields.io/badge/Open%20on%20GitHub-grey?logo=github" alt="Open on GitHub" /></a>
+
+
+
+
+AG2’s swarm orchestration provides a flexible and powerful method of
+managing a conversation with multiple agents, tools, and transitions.
+
+In this notebook, we look at more advanced features of the swarm
+orchestration.
+
+If you are new to swarm, check out [this
+notebook](https://docs.ag2.ai/notebooks/agentchat_swarm), where we
+introduce the core features of swarms including global context
+variables, hand offs, and initiating a swarm chat.
+
+In this notebook we’re going to demonstrate these features AG2’s swarm
+orchestration:
+
+-   Updating an agent’s state
+-   Conditional handoffs
+-   Nested chats
+
+
+<div class="info Requirements">
+<Info>
+Install `ag2`:
+```bash
+pip install ag2
+```
+
+For more information, please refer to the [installation guide](/docs/installation/Installation).
+</Info>
+</div>
+
+
+## Set your API Endpoint
+
+The
+[`config_list_from_json`](https://docs.ag2.ai/docs/reference/oai/openai_utils#config-list-from-json)
+function loads a list of configurations from an environment variable or
+a json file.
+
+```python
+import autogen
+
+config_list = autogen.config_list_from_json(
+    "OAI_CONFIG_LIST",
+    filter_dict={
+        "model": ["gpt-4o"],
+    },
+)
+
+llm_config = {
+    "cache_seed": 42,  # change the cache_seed for different trials
+    "temperature": 1,
+    "config_list": config_list,
+    "timeout": 120,
+}
+```
+
+``` text
+/usr/local/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+```
+
+## Demonstration
+
+We’re creating this customer service workflow for an e-commerce
+platform. Customers can ask about the status of their orders, but they
+must be authenticated to do so.
+
+<figure>
+<img src="swarm_enhanced_01.png" alt="Swarm Enhanced Demonstration" />
+<figcaption aria-hidden="true">Swarm Enhanced Demonstration</figcaption>
+</figure>
+
+Key aspects of this swarm are:
+
+1.  System messages are customised, incorporating the context of the
+    workflow
+2.  Handoffs are conditional, only being available when they are
+    relevant
+3.  A nested chat handles the order retrieval and summarisation
+
+```python
+from typing import Any, Dict, List
+
+from autogen import (
+    AFTER_WORK,
+    ON_CONDITION,
+    UPDATE_SYSTEM_MESSAGE,
+    AfterWorkOption,
+    ConversableAgent,
+    SwarmAgent,
+    SwarmResult,
+    UserProxyAgent,
+    initiate_swarm_chat,
+)
+```
+
+### Context
+
+```python
+workflow_context = {
+    # customer details
+    "customer_name": None,
+    "logged_in_username": None,
+    # workflow status
+    "logged_in": False,
+    "requires_login": True,
+    # order enquiry details
+    "has_order_id": False,
+    "order_id": None,
+}
+```
+
+### Databases
+
+```python
+# Databases
+
+USER_DATABASE = {
+    "mark": {
+        "full_name": "Mark Sze",
+    },
+    "kevin": {
+        "full_name": "Yiran Wu",
+    },
+}
+
+ORDER_DATABASE = {
+    "TR13845": {
+        "user": "mark",
+        "order_number": "TR13845",
+        "status": "shipped",  # order status: order_received, shipped, delivered, return_started, returned
+        "return_status": "N/A",  # return status: N/A, return_started, return_shipped, return_delivered, refund_issued
+        "product": "matress",
+        "link": "https://www.example.com/TR13845",
+        "shipping_address": "123 Main St, State College, PA 12345",
+    },
+    "TR14234": {
+        "user": "kevin",
+        "order_number": "TR14234",
+        "status": "delivered",
+        "return_status": "N/A",
+        "product": "pillow",
+        "link": "https://www.example.com/TR14234",
+        "shipping_address": "123 Main St, State College, PA 12345",
+    },
+    "TR29384": {
+        "user": "mark",
+        "order_number": "TR29384",
+        "status": "delivered",
+        "return_status": "N/A",
+        "product": "bed frame",
+        "link": "https://www.example.com/TR29384",
+        "shipping_address": "123 Main St, State College, PA 12345",
+    },
+}
+```
+
+### Agent’s Functions
+
+```python
+# ORDER FUNCTIONS
+def check_order_id(order_id: str, context_variables: dict) -> SwarmResult:
+    """Check if the order ID is valid"""
+    # Restricts order to checking to the logged in user
+    if (
+        context_variables["logged_in_username"]
+        and order_id in ORDER_DATABASE
+        and ORDER_DATABASE[order_id]["user"] == context_variables["logged_in_username"]
+    ):
+        return SwarmResult(
+            context_variables=context_variables, values=f"Order ID {order_id} is valid.", agent=order_triage_agent
+        )
+    else:
+        return SwarmResult(
+            context_variables=context_variables,
+            values=f"Order ID {order_id} is invalid. Please ask for the correct order ID.",
+            agent=order_triage_agent,
+        )
+
+
+def record_order_id(order_id: str, context_variables: dict) -> SwarmResult:
+    """Record the order ID in the workflow context"""
+    if order_id not in ORDER_DATABASE:
+        return SwarmResult(
+            context_variables=context_variables,
+            values=f"Order ID {order_id} not found. Please ask for the correct order ID.",
+            agent=order_triage_agent,
+        )
+
+    context_variables["order_id"] = order_id
+    context_variables["has_order_id"] = True
+    return SwarmResult(
+        context_variables=context_variables, values=f"Order ID Recorded: {order_id}", agent=order_mgmt_agent
+    )
+
+
+# AUTHENTICATION FUNCTIONS
+def login_customer_by_username(username: str, context_variables: dict) -> SwarmResult:
+    """Get and log the customer in by their username"""
+    if username in USER_DATABASE:
+        context_variables["customer_name"] = USER_DATABASE[username]["full_name"]
+        context_variables["logged_in_username"] = username
+        context_variables["logged_in"] = True
+        context_variables["requires_login"] = False
+        return SwarmResult(
+            context_variables=context_variables,
+            values=f"Welcome back our customer, {context_variables['customer_name']}! Please continue helping them.",
+            agent=order_triage_agent,
+        )
+    else:
+        return SwarmResult(
+            context_variables=context_variables,
+            values=f"User {username} not found. Please ask for the correct username.",
+            agent=authentication_agent,
+        )
+```
+
+### Agents
+
+```python
+# AGENTS
+
+# Human customer
+user = UserProxyAgent(
+    name="customer",
+    code_execution_config=False,
+)
+
+order_triage_prompt = """You are an order triage agent, working with a customer and a group of agents to provide support for your e-commerce platform.
+
+An agent needs to be logged in to be able to access their order. The authentication_agent will work with the customer to verify their identity, transfer to them to start with.
+The order_mgmt_agent will manage all order related tasks, such as tracking orders, managing orders, etc. Be sure to check the order as one step. Then if it's valid you can record it in the context.
+
+Ask the customer for further information when necessary.
+
+The current status of this workflow is:
+Customer name: {customer_name}
+Logged in: {logged_in}
+Enquiring for Order ID: {order_id}
+"""
+
+order_triage_agent = SwarmAgent(
+    name="order_triage_agent",
+    update_agent_state_before_reply=[
+        UPDATE_SYSTEM_MESSAGE(order_triage_prompt),
+    ],
+    functions=[check_order_id, record_order_id],
+    llm_config=llm_config,
+)
+
+authentication_prompt = "You are an authentication agent that verifies the identity of the customer."
+
+authentication_agent = SwarmAgent(
+    name="authentication_agent",
+    system_message=authentication_prompt,
+    functions=[login_customer_by_username],
+    llm_config=llm_config,
+)
+
+order_management_prompt = """You are an order management agent that manages inquiries related to e-commerce orders.
+
+The order must be logged in to access their order.
+
+Use your available tools to get the status of the details from the customer. Ask the customer questions as needed.
+
+The current status of this workflow is:
+Customer name: {customer_name}
+Logged in: {logged_in}
+Enquiring for Order ID: {order_id}
+"""
+
+order_mgmt_agent = SwarmAgent(
+    name="order_mgmt_agent",
+    update_agent_state_before_reply=[
+        UPDATE_SYSTEM_MESSAGE(order_management_prompt),
+    ],
+    functions=[check_order_id, record_order_id],
+    llm_config=llm_config,
+)
+```
+
+### Nested Chats
+
+```python
+# NESTED CHAT - Delivery Status
+order_retrieval_agent = ConversableAgent(
+    name="order_retrieval_agent",
+    system_message="You are an order retrieval agent that gets details about an order.",
+    llm_config=llm_config,
+)
+
+order_summariser_agent = ConversableAgent(
+    name="order_summariser_agent",
+    system_message="You are an order summariser agent that provides a summary of the order details.",
+    llm_config=llm_config,
+)
+
+
+def extract_order_summary(recipient: ConversableAgent, messages, sender: ConversableAgent, config):
+    """Extracts the order summary based on the OrderID in the context variables"""
+    order_id = sender.get_context("order_id")
+    if order_id in ORDER_DATABASE:
+        order = ORDER_DATABASE[order_id]
+        return f"Order {order['order_number']} for {order['product']} is currently {order['status']}. The shipping address is {order['shipping_address']}."
+    else:
+        return f"Order {order_id} not found."
+
+
+nested_chat_one = {
+    "carryover_config": {"summary_method": "last_msg"},
+    "recipient": order_retrieval_agent,
+    "message": extract_order_summary,  # "Retrieve the status details of the order using the order id",
+    "max_turns": 1,
+}
+
+nested_chat_two = {
+    "recipient": order_summariser_agent,
+    "message": "Summarise the order details provided in a tabulated, text-based, order sheet format",
+    "max_turns": 1,
+    "summary_method": "last_msg",
+}
+
+chat_queue = [nested_chat_one, nested_chat_two]
+```
+
+### Handoffs (ON_CONDITIONS and AFTER_WORKS)
+
+```python
+# HANDOFFS
+order_triage_agent.register_hand_off(
+    [
+        ON_CONDITION(
+            target=authentication_agent,
+            condition="The customer is not logged in, authenticate the customer.",
+            available="requires_login",
+        ),
+        ON_CONDITION(
+            target=order_mgmt_agent,
+            condition="The customer is logged in, continue with the order triage.",
+            available="logged_in",
+        ),
+        AFTER_WORK(AfterWorkOption.REVERT_TO_USER),
+    ]
+)
+
+authentication_agent.register_hand_off(
+    [
+        ON_CONDITION(
+            target=order_triage_agent,
+            condition="The customer is logged in, continue with the order triage.",
+            available="logged_in",
+        ),
+        AFTER_WORK(AfterWorkOption.REVERT_TO_USER),
+    ]
+)
+
+
+def has_order_in_context(agent: SwarmAgent, messages: List[Dict[str, Any]]) -> bool:
+    return agent.get_context("has_order_id")
+
+
+order_mgmt_agent.register_hand_off(
+    [
+        ON_CONDITION(
+            target={
+                "chat_queue": chat_queue,
+            },
+            condition="Retrieve the status of the order",
+            available=has_order_in_context,
+        ),
+        ON_CONDITION(
+            target=authentication_agent,
+            condition="The customer is not logged in, authenticate the customer.",
+            available="requires_login",
+        ),
+        ON_CONDITION(target=order_triage_agent, condition="The customer has no more enquiries about this order."),
+        AFTER_WORK(AfterWorkOption.REVERT_TO_USER),
+    ]
+)
+```
+
+### Let’s go!
+
+```python
+chat_history = initiate_swarm_chat(
+    initial_agent=order_triage_agent,
+    agents=[order_triage_agent, authentication_agent, order_mgmt_agent],
+    context_variables=workflow_context,
+    messages="Can you help me with my order.",
+    user_agent=user,
+    max_rounds=40,
+    after_work=AfterWorkOption.TERMINATE,
+)
+```
+
+```` text
+customer (to chat_manager):
+
+Can you help me with my order.
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_triage_agent
+
+order_triage_agent (to chat_manager):
+
+***** Suggested tool call (call_RhIdaMav5FoXxvXiYhyDoivV): transfer_order_triage_agent_to_authentication_agent *****
+Arguments: 
+{}
+********************************************************************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: Tool_Execution
+
+
+>>>>>>>> EXECUTING FUNCTION transfer_order_triage_agent_to_authentication_agent...
+Tool_Execution (to chat_manager):
+
+***** Response from calling tool (call_RhIdaMav5FoXxvXiYhyDoivV) *****
+SwarmAgent --> authentication_agent
+**********************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: authentication_agent
+
+authentication_agent (to chat_manager):
+
+I can assist you with your order, but first, I'll need to verify your identity. Please provide your username.
+
+--------------------------------------------------------------------------------
+
+Next speaker: customer
+
+customer (to chat_manager):
+
+barry
+
+--------------------------------------------------------------------------------
+
+Next speaker: authentication_agent
+
+authentication_agent (to chat_manager):
+
+***** Suggested tool call (call_gEx5FZ86W62p1vXCVNAkue7t): login_customer_by_username *****
+Arguments: 
+{"username":"barry"}
+*******************************************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: Tool_Execution
+
+
+>>>>>>>> EXECUTING FUNCTION login_customer_by_username...
+Tool_Execution (to chat_manager):
+
+***** Response from calling tool (call_gEx5FZ86W62p1vXCVNAkue7t) *****
+User barry not found. Please ask for the correct username.
+**********************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: authentication_agent
+
+authentication_agent (to chat_manager):
+
+It seems that there is no account associated with the username "barry." Could you please double-check and provide the correct username?
+
+--------------------------------------------------------------------------------
+
+Next speaker: customer
+
+customer (to chat_manager):
+
+mark
+
+--------------------------------------------------------------------------------
+
+Next speaker: authentication_agent
+
+authentication_agent (to chat_manager):
+
+***** Suggested tool call (call_XmbzzNw7PsYFYsTSVKoylATA): login_customer_by_username *****
+Arguments: 
+{"username":"mark"}
+*******************************************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: Tool_Execution
+
+
+>>>>>>>> EXECUTING FUNCTION login_customer_by_username...
+Tool_Execution (to chat_manager):
+
+***** Response from calling tool (call_XmbzzNw7PsYFYsTSVKoylATA) *****
+Welcome back our customer, Mark Sze! Please continue helping them.
+**********************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_triage_agent
+
+order_triage_agent (to chat_manager):
+
+***** Suggested tool call (call_mXHJHDzVPTXWDhll0UH7w3QI): transfer_order_triage_agent_to_order_mgmt_agent *****
+Arguments: 
+{}
+****************************************************************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: Tool_Execution
+
+
+>>>>>>>> EXECUTING FUNCTION transfer_order_triage_agent_to_order_mgmt_agent...
+Tool_Execution (to chat_manager):
+
+***** Response from calling tool (call_mXHJHDzVPTXWDhll0UH7w3QI) *****
+SwarmAgent --> order_mgmt_agent
+**********************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_mgmt_agent
+
+order_mgmt_agent (to chat_manager):
+
+Sure, Mark! Could you please provide me with the Order ID you are enquiring about?
+
+--------------------------------------------------------------------------------
+
+Next speaker: customer
+
+customer (to chat_manager):
+
+TR14234
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_mgmt_agent
+
+order_mgmt_agent (to chat_manager):
+
+***** Suggested tool call (call_UMS0fVQEAW9Hkqo3paa6ZDp5): check_order_id *****
+Arguments: 
+{"order_id": "TR14234"}
+*******************************************************************************
+***** Suggested tool call (call_ERAQ8vgnCagMuvCthkZ6E5l7): record_order_id *****
+Arguments: 
+{"order_id": "TR14234"}
+********************************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: Tool_Execution
+
+
+>>>>>>>> EXECUTING FUNCTION check_order_id...
+
+>>>>>>>> EXECUTING FUNCTION record_order_id...
+Tool_Execution (to chat_manager):
+
+***** Response from calling tool (call_UMS0fVQEAW9Hkqo3paa6ZDp5) *****
+Order ID TR14234 is invalid. Please ask for the correct order ID.
+**********************************************************************
+
+--------------------------------------------------------------------------------
+***** Response from calling tool (call_ERAQ8vgnCagMuvCthkZ6E5l7) *****
+Order ID Recorded: TR14234
+**********************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_mgmt_agent
+
+order_mgmt_agent (to chat_manager):
+
+It seems that the Order ID "TR14234" is invalid. Could you please double-check and provide the correct Order ID?
+
+--------------------------------------------------------------------------------
+
+Next speaker: customer
+
+customer (to chat_manager):
+
+TR14234
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_mgmt_agent
+
+order_mgmt_agent (to chat_manager):
+
+***** Suggested tool call (call_DqbSSNveiHpMydYE7pOyfkaP): check_order_id *****
+Arguments: 
+{"order_id":"TR14234"}
+*******************************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: Tool_Execution
+
+
+>>>>>>>> EXECUTING FUNCTION check_order_id...
+Tool_Execution (to chat_manager):
+
+***** Response from calling tool (call_DqbSSNveiHpMydYE7pOyfkaP) *****
+Order ID TR14234 is invalid. Please ask for the correct order ID.
+**********************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_triage_agent
+
+order_triage_agent (to chat_manager):
+
+The Order ID "TR14234" still appears to be invalid. Could you please verify and provide the correct Order ID or any additional information that might help us find your order?
+
+--------------------------------------------------------------------------------
+
+Next speaker: customer
+
+customer (to chat_manager):
+
+TR13845
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_triage_agent
+
+order_triage_agent (to chat_manager):
+
+***** Suggested tool call (call_miEIpNwDd1FFGLenwUB3oPMq): check_order_id *****
+Arguments: 
+{"order_id": "TR13845"}
+*******************************************************************************
+***** Suggested tool call (call_uHRdFcp41PIp4KWCuHUdWQxo): record_order_id *****
+Arguments: 
+{"order_id": "TR13845"}
+********************************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: Tool_Execution
+
+
+>>>>>>>> EXECUTING FUNCTION check_order_id...
+
+>>>>>>>> EXECUTING FUNCTION record_order_id...
+Tool_Execution (to chat_manager):
+
+***** Response from calling tool (call_miEIpNwDd1FFGLenwUB3oPMq) *****
+Order ID TR13845 is valid.
+**********************************************************************
+
+--------------------------------------------------------------------------------
+***** Response from calling tool (call_uHRdFcp41PIp4KWCuHUdWQxo) *****
+Order ID Recorded: TR13845
+**********************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_mgmt_agent
+
+order_mgmt_agent (to chat_manager):
+
+***** Suggested tool call (call_sYsVS1U3k3Cf2KbqKJ4hhyRa): transfer_order_mgmt_agent_to_nested_chat_order_mgmt_agent_1 *****
+Arguments: 
+{}
+****************************************************************************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: Tool_Execution
+
+
+>>>>>>>> EXECUTING FUNCTION transfer_order_mgmt_agent_to_nested_chat_order_mgmt_agent_1...
+Tool_Execution (to chat_manager):
+
+***** Response from calling tool (call_sYsVS1U3k3Cf2KbqKJ4hhyRa) *****
+SwarmAgent --> nested_chat_order_mgmt_agent_1
+**********************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: nested_chat_order_mgmt_agent_1
+
+
+********************************************************************************
+Starting a new chat....
+
+********************************************************************************
+nested_chat_order_mgmt_agent_1 (to order_retrieval_agent):
+
+Order TR13845 for matress is currently shipped. The shipping address is 123 Main St, State College, PA 12345.
+Context:
+Order ID TR13845 is valid.
+Order ID Recorded: TR13845
+
+--------------------------------------------------------------------------------
+
+>>>>>>>> USING AUTO REPLY...
+order_retrieval_agent (to nested_chat_order_mgmt_agent_1):
+
+It looks like order TR13845 for a mattress has been shipped. The shipping address for this order is 123 Main St, State College, PA 12345. If you need further details about this order, just let me know!
+
+--------------------------------------------------------------------------------
+
+********************************************************************************
+Starting a new chat....
+
+********************************************************************************
+nested_chat_order_mgmt_agent_1 (to order_summariser_agent):
+
+Summarise the order details provided in a tabulated, text-based, order sheet format
+Context: 
+It looks like order TR13845 for a mattress has been shipped. The shipping address for this order is 123 Main St, State College, PA 12345. If you need further details about this order, just let me know!
+
+--------------------------------------------------------------------------------
+
+>>>>>>>> USING AUTO REPLY...
+order_summariser_agent (to nested_chat_order_mgmt_agent_1):
+
+```
+Order Summary:
+----------------------------------------------------
+Order Number     : TR13845
+Product          : Mattress
+Status           : Shipped
+Shipping Address : 123 Main St, 
+                   State College, PA 12345
+----------------------------------------------------
+```
+
+--------------------------------------------------------------------------------
+nested_chat_order_mgmt_agent_1 (to chat_manager):
+
+```
+Order Summary:
+----------------------------------------------------
+Order Number     : TR13845
+Product          : Mattress
+Status           : Shipped
+Shipping Address : 123 Main St, 
+                   State College, PA 12345
+----------------------------------------------------
+```
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_mgmt_agent
+
+order_mgmt_agent (to chat_manager):
+
+Your order with the Order Number TR13845, which involves a "Mattress," has already been shipped. It is on its way to 123 Main St, State College, PA 12345. 
+
+If you have any more questions or need further assistance, feel free to ask!
+
+--------------------------------------------------------------------------------
+
+Next speaker: customer
+
+customer (to chat_manager):
+
+All good
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_mgmt_agent
+
+order_mgmt_agent (to chat_manager):
+
+***** Suggested tool call (call_VtBmcKhDAhh7JUz9aXyPq9Aj): transfer_order_mgmt_agent_to_order_triage_agent *****
+Arguments: 
+{}
+****************************************************************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: Tool_Execution
+
+
+>>>>>>>> EXECUTING FUNCTION transfer_order_mgmt_agent_to_order_triage_agent...
+Tool_Execution (to chat_manager):
+
+***** Response from calling tool (call_VtBmcKhDAhh7JUz9aXyPq9Aj) *****
+SwarmAgent --> order_triage_agent
+**********************************************************************
+
+--------------------------------------------------------------------------------
+
+Next speaker: order_triage_agent
+
+order_triage_agent (to chat_manager):
+
+I'm glad we could assist you, Mark! If you have any more inquiries in the future or need further support, feel free to reach out. Have a great day!
+
+--------------------------------------------------------------------------------
+
+Next speaker: customer
+````
+
+# Controlling flow
+
+### When not logged in
+
+<figure>
+<img src="swarm_enhanced_02.png" alt="Swarm Enhanced Demonstration" />
+<figcaption aria-hidden="true">Swarm Enhanced Demonstration</figcaption>
+</figure>
+
+### When logged in but no order id
+
+<figure>
+<img src="swarm_enhanced_03.png" alt="Swarm Enhanced Demonstration" />
+<figcaption aria-hidden="true">Swarm Enhanced Demonstration</figcaption>
+</figure>
+
+### When logged in with order id
+
+<figure>
+<img src="swarm_enhanced_04.png" alt="Swarm Enhanced Demonstration" />
+<figcaption aria-hidden="true">Swarm Enhanced Demonstration</figcaption>
+</figure>
+
+# Agent state
+
+### Agent System Messages with context
+
+<figure>
+<img src="swarm_enhanced_05.png" alt="Swarm Enhanced Demonstration" />
+<figcaption aria-hidden="true">Swarm Enhanced Demonstration</figcaption>
+</figure>

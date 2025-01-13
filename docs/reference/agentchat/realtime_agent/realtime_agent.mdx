@@ -1,0 +1,182 @@
+---
+sidebarTitle: realtime_agent
+title: agentchat.realtime_agent.realtime_agent
+---
+
+## RealtimeAgent
+
+```python
+class RealtimeAgent(ConversableAgent)
+```
+
+(Experimental) Agent for interacting with the Realtime Clients.
+
+### \_\_init\_\_
+
+```python
+def __init__(*,
+             name: str,
+             audio_adapter: Optional[RealtimeObserver] = None,
+             system_message: str = "You are a helpful AI Assistant.",
+             llm_config: dict[str, Any],
+             voice: str = "alloy",
+             logger: Optional[Logger] = None,
+             websocket: Optional[WebSocket] = None)
+```
+
+(Experimental) Agent for interacting with the Realtime Clients.
+
+**Arguments**:
+
+- `name` _str_ - The name of the agent.
+- `audio_adapter` _Optional[RealtimeObserver] = None_ - The audio adapter for the agent.
+- `system_message` _str_ - The system message for the agent.
+- `llm_config` _dict[str, Any], bool_ - The config for the agent.
+- `voice` _str_ - The voice for the agent.
+- `websocket` _Optional[WebSocket] = None_ - WebSocket from WebRTC javascript client
+
+### logger
+
+```python
+@property
+def logger() -> Logger
+```
+
+Get the logger for the agent.
+
+### realtime\_client
+
+```python
+@property
+def realtime_client() -> RealtimeClientProtocol
+```
+
+Get the OpenAI Realtime Client.
+
+### registred\_realtime\_tools
+
+```python
+@property
+def registred_realtime_tools() -> dict[str, Tool]
+```
+
+Get the registered realtime tools.
+
+### register\_observer
+
+```python
+def register_observer(observer: RealtimeObserver) -> None
+```
+
+Register an observer with the Realtime Agent.
+
+**Arguments**:
+
+- `observer` _RealtimeObserver_ - The observer to register.
+
+### register\_swarm
+
+```python
+def register_swarm(*,
+                   initial_agent: SwarmAgent,
+                   agents: list[SwarmAgent],
+                   system_message: Optional[str] = None) -> None
+```
+
+Register a swarm of agents with the Realtime Agent.
+
+**Arguments**:
+
+- `initial_agent` _SwarmAgent_ - The initial agent.
+- `agents` _list[SwarmAgent]_ - The agents in the swarm.
+- `system_message` _str_ - The system message for the agent.
+
+### run
+
+```python
+async def run() -> None
+```
+
+Run the agent.
+
+### register\_realtime\_function
+
+```python
+def register_realtime_function(
+        *,
+        name: Optional[str] = None,
+        description: Optional[str] = None) -> Callable[[Union[F, Tool]], Tool]
+```
+
+Decorator for registering a function to be used by an agent.
+
+**Arguments**:
+
+- `name` _str_ - The name of the function.
+- `description` _str_ - The description of the function.
+  
+
+**Returns**:
+
+  Callable[[Union[F, Tool]], Tool]: The decorator for registering a function.
+
+### reset\_answer
+
+```python
+def reset_answer() -> None
+```
+
+Reset the answer event.
+
+### set\_answer
+
+```python
+def set_answer(answer: str) -> str
+```
+
+Set the answer to the question.
+
+### get\_answer
+
+```python
+async def get_answer() -> str
+```
+
+Get the answer to the question.
+
+### ask\_question
+
+```python
+async def ask_question(question: str, question_timeout: int) -> None
+```
+
+Send a question for the user to the agent and wait for the answer.
+If the answer is not received within the timeout, the question is repeated.
+
+**Arguments**:
+
+- `question` - The question to ask the user.
+- `question_timeout` - The time in seconds to wait for the answer.
+
+### check\_termination\_and\_human\_reply
+
+```python
+def check_termination_and_human_reply(
+        messages: Optional[list[dict[str, Any]]] = None,
+        sender: Optional[Agent] = None,
+        config: Optional[Any] = None) -> tuple[bool, Union[str, None]]
+```
+
+Check if the conversation should be terminated and if the agent should reply.
+
+Called when its agents turn in the chat conversation.
+
+**Arguments**:
+
+- `messages` - list of dict
+  the messages in the conversation
+- `sender` - Agent
+  the agent sending the message
+- `config` - any
+  the config for the agent
+

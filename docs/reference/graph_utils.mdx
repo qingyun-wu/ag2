@@ -1,0 +1,54 @@
+---
+sidebarTitle: graph_utils
+title: graph_utils
+---
+
+### has\_self\_loops
+
+```python
+def has_self_loops(allowed_speaker_transitions: dict) -> bool
+```
+
+Returns True if there are self loops in the allowed_speaker_transitions_Dict.
+
+### check\_graph\_validity
+
+```python
+def check_graph_validity(allowed_speaker_transitions_dict: dict,
+                         agents: list[Agent])
+```
+
+allowed_speaker_transitions_dict: A dictionary of keys and list as values. The keys are the names of the agents, and the values are the names of the agents that the key agent can transition to.
+agents: A list of Agents
+
+Checks for the following:
+Errors
+1. The dictionary must have a structure of keys and list as values
+2. Every key exists in agents.
+3. Every value is a list of Agents (not string).
+
+**Warnings**:
+
+  1. Warning if there are isolated agent nodes
+  2. Warning if the set of agents in allowed_speaker_transitions do not match agents
+  3. Warning if there are duplicated agents in any values of `allowed_speaker_transitions_dict`
+
+### invert\_disallowed\_to\_allowed
+
+```python
+def invert_disallowed_to_allowed(disallowed_speaker_transitions_dict: dict,
+                                 agents: list[Agent]) -> dict
+```
+
+Start with a fully connected allowed_speaker_transitions_dict of all agents. Remove edges from the fully connected allowed_speaker_transitions_dict according to the disallowed_speaker_transitions_dict to form the allowed_speaker_transitions_dict.
+
+### visualize\_speaker\_transitions\_dict
+
+```python
+def visualize_speaker_transitions_dict(speaker_transitions_dict: dict,
+                                       agents: list[Agent],
+                                       export_path: Optional[str] = None)
+```
+
+Visualize the speaker_transitions_dict using networkx.
+

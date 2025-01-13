@@ -1,0 +1,167 @@
+---
+sidebarTitle: math_user_proxy_agent
+title: agentchat.contrib.math_user_proxy_agent
+---
+
+## MathUserProxyAgent
+
+```python
+class MathUserProxyAgent(UserProxyAgent)
+```
+
+(Experimental) A MathChat agent that can handle math problems.
+
+#### MAX\_CONSECUTIVE\_AUTO\_REPLY
+
+maximum number of consecutive auto replies (subject to future change)
+
+### \_\_init\_\_
+
+```python
+def __init__(name: Optional[str] = "MathChatAgent",
+             is_termination_msg: Optional[Callable[
+                 [dict], bool]] = _is_termination_msg_mathchat,
+             human_input_mode: Literal["ALWAYS", "NEVER",
+                                       "TERMINATE"] = "NEVER",
+             default_auto_reply: Optional[Union[str, dict,
+                                                None]] = DEFAULT_REPLY,
+             max_invalid_q_per_step=3,
+             **kwargs)
+```
+
+**Arguments**:
+
+- `name` _str_ - name of the agent
+- `is_termination_msg` _function_ - a function that takes a message in the form of a dictionary and returns a boolean value indicating if this received message is a termination message.
+  The dict can contain the following keys: "content", "role", "name", "function_call".
+- `human_input_mode` _str_ - whether to ask for human inputs every time a message is received.
+  Possible values are "ALWAYS", "TERMINATE", "NEVER".
+  (1) When "ALWAYS", the agent prompts for human input every time a message is received.
+  Under this mode, the conversation stops when the human input is "exit",
+  or when is_termination_msg is True and there is no human input.
+  (2) When "TERMINATE", the agent only prompts for human input only when a termination message is received or
+  the number of auto reply reaches the max_consecutive_auto_reply.
+  (3) (Default) When "NEVER", the agent will never prompt for human input. Under this mode, the conversation stops
+  when the number of auto reply reaches the max_consecutive_auto_reply or when is_termination_msg is True.
+- `default_auto_reply` _str or dict or None_ - the default auto reply message when no code execution or llm based reply is generated.
+- `max_invalid_q_per_step` _int_ - (ADDED) the maximum number of invalid queries per step.
+- `**kwargs` _dict_ - other kwargs in [UserProxyAgent](../user_proxy_agent#init).
+
+### message\_generator
+
+```python
+@staticmethod
+def message_generator(sender, recipient, context)
+```
+
+Generate a prompt for the assistant agent with the given problem and prompt.
+
+**Arguments**:
+
+- `sender` _Agent_ - the sender of the message.
+- `recipient` _Agent_ - the recipient of the message.
+- `context` _dict_ - a dictionary with the following fields:
+- `problem` _str_ - the problem to be solved.
+- `prompt_type` _str, Optional_ - the type of the prompt. Possible values are "default", "python", "wolfram".
+  (1) "default": the prompt that allows the agent to choose between 3 ways to solve a problem:
+  1. write a python program to solve it directly.
+  2. solve it directly without python.
+  3. solve it step by step with python.
+  (2) "python":
+  a simplified prompt from the third way of the "default" prompt, that asks the assistant
+  to solve the problem step by step with python.
+  (3) "two_tools":
+  a simplified prompt similar to the "python" prompt, but allows the model to choose between
+  Python and Wolfram Alpha to solve the problem.
+- `customized_prompt` _str, Optional_ - a customized prompt to be used. If it is not None, the prompt_type will be ignored.
+  
+
+**Returns**:
+
+- `str` - the generated prompt ready to be sent to the assistant agent.
+
+### execute\_one\_python\_code
+
+```python
+def execute_one_python_code(pycode)
+```
+
+Execute python code blocks.
+
+Previous python code will be saved and executed together with the new code.
+the "print" function will also be added to the last line of the code if needed
+
+### execute\_one\_wolfram\_query
+
+```python
+def execute_one_wolfram_query(query: str)
+```
+
+Run one wolfram query and return the output.
+
+**Arguments**:
+
+- `query` - string of the query.
+  
+
+**Returns**:
+
+- `output` - string with the output of the query.
+- `is_success` - boolean indicating whether the query was successful.
+
+### get\_from\_dict\_or\_env
+
+```python
+def get_from_dict_or_env(data: dict[str, Any],
+                         key: str,
+                         env_key: str,
+                         default: Optional[str] = None) -> str
+```
+
+Get a value from a dictionary or an environment variable.
+
+## WolframAlphaAPIWrapper
+
+```python
+class WolframAlphaAPIWrapper(BaseModel)
+```
+
+Wrapper for Wolfram Alpha.
+
+Docs for using:
+
+1. Go to wolfram alpha and sign up for a developer account
+2. Create an app and get your APP ID
+3. Save your APP ID into WOLFRAM_ALPHA_APPID env variable
+4. pip install wolframalpha
+
+#### wolfram\_client
+
+:meta private:
+
+## Config
+
+```python
+class Config()
+```
+
+Configuration for this pydantic object.
+
+### validate\_environment
+
+```python
+@root_validator(skip_on_failure=True)
+@classmethod
+def validate_environment(cls, values: dict) -> dict
+```
+
+Validate that api key and python package exists in environment.
+
+### run
+
+```python
+def run(query: str) -> tuple[str, bool]
+```
+
+Run query through WolframAlpha and parse result.
+

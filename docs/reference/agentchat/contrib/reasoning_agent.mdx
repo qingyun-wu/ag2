@@ -1,0 +1,241 @@
+---
+sidebarTitle: reasoning_agent
+title: agentchat.contrib.reasoning_agent
+---
+
+## ThinkNode
+
+```python
+class ThinkNode()
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(content: str, parent: Optional["ThinkNode"] = None) -> None
+```
+
+A node in a tree structure representing a step in the reasoning process.
+
+This class implements a tree node that stores content (text describing a reasoning step),
+maintains parent-child relationships, tracks node statistics, and provides utilities
+for traversing/visualizing the reasoning path.
+
+**Arguments**:
+
+- `content` _str_ - The text content/description for this reasoning step.
+- `parent` _Optional[ThinkNode]_ - The parent node in the tree, if any.
+  
+
+**Attributes**:
+
+- `content` _str_ - The text content/description for this reasoning step.
+- `value` _Optional[float]_ - A numeric score/value assigned to this node.
+- `parent` _Optional[ThinkNode]_ - Reference to the parent node.
+- `reflection` _str_ - A string containing reflections on the reasoning process.
+- `rating_details` _str_ - A string providing details about the rating of this node.
+- `depth` _int_ - The depth of this node in the tree (root = 0).
+- `children` _List[ThinkNode]_ - List of child nodes.
+- `visits` _int_ - Number of times this node has been visited during search.
+  
+  The node automatically maintains the tree structure by:
+  - Setting its depth based on the parent's depth + 1.
+  - Adding itself to the parent's children list if the parent exists.
+  - Providing trajectory utilities to get the full path from root to this node.
+
+### trajectory
+
+```python
+@property
+def trajectory() -> str
+```
+
+Get a formatted string representation of the path from root to this node.
+
+**Returns**:
+
+- `str` - A formatted string showing the question and each step in the reasoning process
+
+### backpropagate
+
+```python
+def backpropagate(reward: float)
+```
+
+Update the score of this node and its parents using moving average.
+
+### to\_dict
+
+```python
+def to_dict() -> dict
+```
+
+Convert ThinkNode to dictionary representation.
+
+**Returns**:
+
+- `Dict` - Dictionary containing all node attributes and recursive children
+
+### from\_dict
+
+```python
+@classmethod
+def from_dict(cls,
+              data: dict,
+              parent: Optional["ThinkNode"] = None) -> "ThinkNode"
+```
+
+Create ThinkNode from dictionary representation.
+
+**Arguments**:
+
+- `data` _Dict_ - Dictionary containing node data
+- `parent` _Optional[ThinkNode]_ - Parent node to attach to
+  
+
+**Returns**:
+
+- `ThinkNode` - Reconstructed node with all children
+
+### visualize\_tree
+
+```python
+def visualize_tree(root: ThinkNode) -> None
+```
+
+Visualize the tree of thoughts using graphviz.
+
+### extract\_sft\_dataset
+
+```python
+def extract_sft_dataset(root)
+```
+
+Extract the best trajectory or multiple equally good trajectories
+for SFT training.
+
+**Arguments**:
+
+- `root` - The root node of the tree.
+  
+
+**Returns**:
+
+  List of best trajectories, where each trajectory is a pair of instruction and response.
+
+### extract\_rlhf\_preference\_dataset
+
+```python
+def extract_rlhf_preference_dataset(root, contrastive_threshold=0.2)
+```
+
+Extract and generate preference pairs for RLHF training by comparing sibling nodes.
+
+**Arguments**:
+
+- `root` - The root node of the tree.
+- `contrastive_threshold` _float_ - between (0, 1), a distance measure that we are confidence to call
+  one is positive and another is negative.
+  
+
+**Returns**:
+
+  A list of preference pairs, where each pair contains two responses and
+  indicates which one is preferred.
+
+## ReasoningAgent
+
+```python
+class ReasoningAgent(AssistantAgent)
+```
+
+### \_\_init\_\_
+
+```python
+def __init__(name,
+             llm_config,
+             grader_llm_config=None,
+             max_depth=4,
+             beam_size=3,
+             answer_approach="pool",
+             verbose=True,
+             reason_config: dict = {},
+             **kwargs) -> None
+```
+
+Initialize a ReasoningAgent that uses tree-of-thought reasoning.
+
+**Arguments**:
+
+- `name` - Name of the agent
+- `llm_config` - Configuration for the language model
+- `grader_llm_config` - Optional separate configuration for the grader model. If not provided, uses llm_config
+- `max_depth` _int_ - Maximum depth of the reasoning tree
+- `beam_size` _int_ - DEPRECATED. Number of parallel reasoning paths to maintain
+- `answer_approach` _str_ - DEPRECATED. Either "pool" or "best" - how to generate final answer
+- `verbose` _bool_ - Whether to show intermediate steps
+  
+- `reason_config` _dict_ - Configuration for the reasoning method. Supported parameters:
+- `method` _str_ - The search strategy to use. Options:
+  - "beam_search" (default): Uses beam search with parallel paths
+  - "mcts": Uses Monte Carlo Tree Search for exploration
+  - "lats": Uses Language Agent Tree Search with per-step rewards
+  - "dfs": Uses depth-first search (equivalent to beam_search with beam_size=1)
+  
+  Common parameters:
+- `max_depth` _int_ - Maximum depth of reasoning tree (default: 3)
+- `forest_size` _int_ - Number of independent trees to maintain (default: 1)
+- `rating_scale` _int_ - Scale for grading responses, e.g. 1-10 (default: 10)
+  
+  Beam Search specific:
+- `beam_size` _int_ - Number of parallel paths to maintain (default: 3)
+- `answer_approach` _str_ - How to select final answer, "pool" or "best" (default: "pool")
+  
+  MCTS/LATS specific:
+- `nsim` _int_ - Number of simulations to run (default: 3)
+- `exploration_constant` _float_ - UCT exploration parameter (default: 1.41)
+  
+  Example configs:
+- `{"method"` - "beam_search", "beam_size": 5, "max_depth": 4}
+- `{"method"` - "mcts", "nsim": 10, "exploration_constant": 2.0}
+- `{"method"` - "lats", "nsim": 5, "forest_size": 3}
+
+### generate\_forest\_response
+
+```python
+def generate_forest_response(messages, sender, config=None)
+```
+
+Generate a response using tree-of-thought reasoning.
+
+**Arguments**:
+
+- `messages` - Input messages to respond to
+- `sender` - Agent sending the messages
+- `config` - Optional configuration
+  
+
+**Returns**:
+
+  Tuple[bool, str]: Success flag and generated response
+
+### rate\_node
+
+```python
+def rate_node(node: ThinkNode,
+              ground_truth: str = None,
+              is_outcome: bool = False) -> float
+```
+
+Rate the quality of a reasoning path using the grader agent.
+
+**Arguments**:
+
+- `node` _ThinkNode_ - Node containing the reasoning trajectory to evaluate
+- `is_outcome` _bool_ - indicates whether the rating is for an outcome (final answer) or a process (thinking trajectory).
+  
+
+**Returns**:
+
+- `float` - Normalized score between 0 and 1 indicating trajectory quality
+

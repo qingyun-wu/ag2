@@ -1,0 +1,537 @@
+---
+custom_edit_url: https://github.com/ag2ai/ag2/edit/main/notebook/tools_interoperability.ipynb
+description: Cross-Framework LLM Tool Integration with AG2
+source_notebook: /notebook/tools_interoperability.ipynb
+tags:
+- tools
+- langchain
+- crewai
+- pydanticai
+title: Cross-Framework LLM Tool Integration with AG2
+---
+
+<a href="https://colab.research.google.com/github/ag2ai/ag2/blob/main/notebook/tools_interoperability.ipynb" class="colab-badge" target="_blank"><img noZoom src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a>
+<a href="https://github.com/ag2ai/ag2/blob/main/notebook/tools_interoperability.ipynb" class="github-badge" target="_blank"><img noZoom src="https://img.shields.io/badge/Open%20on%20GitHub-grey?logo=github" alt="Open on GitHub" /></a>
+
+
+
+
+In this tutorial, we demonstrate how to integrate LLM tools from various
+frameworks—including [LangChain
+Tools](https://python.langchain.com/v0.1/docs/modules/tools), [CrewAI
+Tools](https://github.com/crewAIInc/crewAI-tools/tree/main), and
+[PydanticAI Tools](https://ai.pydantic.dev/tools/) into the AG2
+framework. This process enables smooth interoperability between these
+systems, allowing developers to leverage the unique capabilities of each
+toolset within AG2’s flexible agent-based architecture. By the end of
+this guide, you will understand how to configure agents, adapt these
+tools for use in AG2, and validate the integration through practical
+examples.
+
+## LangChain Tools Integration
+
+LangChain is a popular framework that offers a wide range of tools to
+work with LLMs. LangChain has already implemented a variety of tools
+that can be easily integrated into AG2. You can explore the available
+tools in the [LangChain Community
+Tools](https://github.com/langchain-ai/langchain/tree/master/libs/community/langchain_community/tools)
+folder. These tools, such as those for querying APIs, web scraping, and
+text generation, can be quickly incorporated into AG2, providing
+powerful functionality for your agents.
+
+### Installation
+
+To integrate LangChain tools into the AG2 framework, install the
+required dependencies:
+
+```bash
+pip install ag2[interop-langchain]
+```
+
+Additionally, this notebook uses LangChain’s [Wikipedia
+Tool](https://api.python.langchain.com/en/latest/tools/langchain_community.tools.wikipedia.tool.WikipediaQueryRun.html),
+which requires the `wikipedia` package. Install it with:
+
+```bash
+pip install wikipedia
+```
+
+### Imports
+
+Import necessary modules and tools.
+
+-   [WikipediaQueryRun](https://api.python.langchain.com/en/latest/tools/langchain_community.tools.wikipedia.tool.WikipediaQueryRun.html)
+    and
+    [WikipediaAPIWrapper](https://python.langchain.com/api_reference/community/utilities/langchain_community.utilities.wikipedia.WikipediaAPIWrapper.html):
+    Tools for querying Wikipedia.
+-   `AssistantAgent` and `UserProxyAgent`: Agents that facilitate
+    communication in the AG2 framework.
+-   `Interoperability`: This module acts as a bridge, making it easier
+    to integrate LangChain tools with AG2’s architecture.
+
+```python
+import os
+
+from langchain_community.tools import WikipediaQueryRun
+from langchain_community.utilities import WikipediaAPIWrapper
+
+from autogen import AssistantAgent, UserProxyAgent
+from autogen.interop import Interoperability
+```
+
+``` text
+/usr/local/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+/usr/local/lib/python3.11/site-packages/flaml/__init__.py:20: UserWarning: flaml.automl is not available. Please install flaml[automl] to enable AutoML functionalities.
+  warnings.warn("flaml.automl is not available. Please install flaml[automl] to enable AutoML functionalities.")
+```
+
+### Agent Configuration
+
+Configure the agents for the interaction.
+
+-   `config_list` defines the LLM configurations, including the model
+    and API key.
+-   `UserProxyAgent` simulates user inputs without requiring actual
+    human interaction (set to `NEVER`).
+-   `AssistantAgent` represents the AI agent, configured with the LLM
+    settings.
+
+```python
+config_list = [{"model": "gpt-4o", "api_key": os.environ["OPENAI_API_KEY"]}]
+user_proxy = UserProxyAgent(
+    name="User",
+    human_input_mode="NEVER",
+)
+
+chatbot = AssistantAgent(
+    name="chatbot",
+    llm_config={"config_list": config_list},
+)
+```
+
+### Tool Integration
+
+-   Initialize and register the LangChain tool with AG2.
+-   [WikipediaAPIWrapper](https://python.langchain.com/api_reference/community/utilities/langchain_community.utilities.wikipedia.WikipediaAPIWrapper.html):
+    Configured to fetch the top 1 result from Wikipedia with a maximum
+    of 1000 characters per document.
+-   [WikipediaQueryRun](https://api.python.langchain.com/en/latest/tools/langchain_community.tools.wikipedia.tool.WikipediaQueryRun.html):
+    A LangChain tool that executes Wikipedia queries.
+-   `Interoperability`: Converts the LangChain tool into a format
+    compatible with the AG2 framework.
+-   `ag2_tool.register_for_execution(user_proxy)`: Registers the tool
+    for use by the user_proxy agent.
+-   `ag2_tool.register_for_llm(chatbot)`: Registers the tool for
+    integration with the chatbot agent.
+
+```python
+api_wrapper = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=1000)
+langchain_tool = WikipediaQueryRun(api_wrapper=api_wrapper)
+
+interop = Interoperability()
+ag2_tool = interop.convert_tool(tool=langchain_tool, type="langchain")
+
+ag2_tool.register_for_execution(user_proxy)
+ag2_tool.register_for_llm(chatbot)
+```
+
+
+```python
+message = "Tell me about the history of the United States"
+user_proxy.initiate_chat(recipient=chatbot, message=message, max_turns=2)
+```
+
+``` text
+User (to chatbot):
+
+Tell me about the history of the United States
+
+--------------------------------------------------------------------------------
+chatbot (to User):
+
+***** Suggested tool call (call_0x3F3lbGj9tth5xxuipsZk3Y): wikipedia *****
+Arguments: 
+{"tool_input":{"query":"history of the United States"}}
+**************************************************************************
+
+--------------------------------------------------------------------------------
+
+>>>>>>>> EXECUTING FUNCTION wikipedia...
+User (to chatbot):
+
+***** Response from calling tool (call_0x3F3lbGj9tth5xxuipsZk3Y) *****
+Page: History of the United States
+Summary: The history of the lands that became the United States began with the arrival of the first people in the Americas around 15,000 BC. After European colonization of North America began in the late 15th century, wars and epidemics decimated Indigenous societies. By the 1760s, the thirteen British colonies were established. The Southern Colonies built an agricultural system on slave labor, enslaving millions from Africa. After defeating France, the British Parliament imposed a series of taxes; resistance to these taxes, especially the Boston Tea Party in 1773, led to Parliament issuing the Intolerable Acts designed to end self-government.
+In 1776, the United States declared its independence. Led by General George Washington, it won the Revolutionary War in 1783. The Constitution was adopted in 1789, and a Bill of Rights was added in 1791 to guarantee inalienable rights. Washington, the first president, and his adviser Alexander Hamilton created a
+**********************************************************************
+
+--------------------------------------------------------------------------------
+chatbot (to User):
+
+The history of the United States began with the arrival of the first people in the Americas around 15,000 BC. European colonization commenced in the late 15th century, and this led to significant impacts on Indigenous societies, including wars and epidemics that decimated populations. By the 1760s, thirteen British colonies were firmly established. In the Southern Colonies, an agricultural economy heavily reliant on slave labor developed, involving the enslavement of millions of Africans.
+
+Tensions arose in the 18th century between these colonies and Britain, primarily due to taxation without representation, which culminated in events such as the Boston Tea Party in 1773. These events prompted the British Parliament to pass the Intolerable Acts in an attempt to suppress self-governance in the colonies.
+
+In 1776, the colonies declared their independence, forming the United States of America. Under the leadership of General George Washington, the colonies won the Revolutionary War against Britain, achieving victory in 1783. The United States adopted its Constitution in 1789, followed by the Bill of Rights in 1791, which enshrined fundamental rights.
+
+George Washington became the first President, and along with his adviser Alexander Hamilton, began shaping the new nation's governmental and economic structures. This marked the early stages of the United States' journey to becoming an independent and unified country. TERMINATE
+
+--------------------------------------------------------------------------------
+```
+
+``` text
+ChatResult(chat_id=None, chat_history=[{'content': 'Tell me about the history of the United States', 'role': 'assistant', 'name': 'User'}, {'tool_calls': [{'id': 'call_0x3F3lbGj9tth5xxuipsZk3Y', 'function': {'arguments': '{"tool_input":{"query":"history of the United States"}}', 'name': 'wikipedia'}, 'type': 'function'}], 'content': None, 'role': 'assistant'}, {'content': 'Page: History of the United States\nSummary: The history of the lands that became the United States began with the arrival of the first people in the Americas around 15,000 BC. After European colonization of North America began in the late 15th century, wars and epidemics decimated Indigenous societies. By the 1760s, the thirteen British colonies were established. The Southern Colonies built an agricultural system on slave labor, enslaving millions from Africa. After defeating France, the British Parliament imposed a series of taxes; resistance to these taxes, especially the Boston Tea Party in 1773, led to Parliament issuing the Intolerable Acts designed to end self-government.\nIn 1776, the United States declared its independence. Led by General George Washington, it won the Revolutionary War in 1783. The Constitution was adopted in 1789, and a Bill of Rights was added in 1791 to guarantee inalienable rights. Washington, the first president, and his adviser Alexander Hamilton created a', 'tool_responses': [{'tool_call_id': 'call_0x3F3lbGj9tth5xxuipsZk3Y', 'role': 'tool', 'content': 'Page: History of the United States\nSummary: The history of the lands that became the United States began with the arrival of the first people in the Americas around 15,000 BC. After European colonization of North America began in the late 15th century, wars and epidemics decimated Indigenous societies. By the 1760s, the thirteen British colonies were established. The Southern Colonies built an agricultural system on slave labor, enslaving millions from Africa. After defeating France, the British Parliament imposed a series of taxes; resistance to these taxes, especially the Boston Tea Party in 1773, led to Parliament issuing the Intolerable Acts designed to end self-government.\nIn 1776, the United States declared its independence. Led by General George Washington, it won the Revolutionary War in 1783. The Constitution was adopted in 1789, and a Bill of Rights was added in 1791 to guarantee inalienable rights. Washington, the first president, and his adviser Alexander Hamilton created a'}], 'role': 'tool', 'name': 'User'}, {'content': "The history of the United States began with the arrival of the first people in the Americas around 15,000 BC. European colonization commenced in the late 15th century, and this led to significant impacts on Indigenous societies, including wars and epidemics that decimated populations. By the 1760s, thirteen British colonies were firmly established. In the Southern Colonies, an agricultural economy heavily reliant on slave labor developed, involving the enslavement of millions of Africans.\n\nTensions arose in the 18th century between these colonies and Britain, primarily due to taxation without representation, which culminated in events such as the Boston Tea Party in 1773. These events prompted the British Parliament to pass the Intolerable Acts in an attempt to suppress self-governance in the colonies.\n\nIn 1776, the colonies declared their independence, forming the United States of America. Under the leadership of General George Washington, the colonies won the Revolutionary War against Britain, achieving victory in 1783. The United States adopted its Constitution in 1789, followed by the Bill of Rights in 1791, which enshrined fundamental rights.\n\nGeorge Washington became the first President, and along with his adviser Alexander Hamilton, began shaping the new nation's governmental and economic structures. This marked the early stages of the United States' journey to becoming an independent and unified country. TERMINATE", 'role': 'user', 'name': 'chatbot'}], summary="The history of the United States began with the arrival of the first people in the Americas around 15,000 BC. European colonization commenced in the late 15th century, and this led to significant impacts on Indigenous societies, including wars and epidemics that decimated populations. By the 1760s, thirteen British colonies were firmly established. In the Southern Colonies, an agricultural economy heavily reliant on slave labor developed, involving the enslavement of millions of Africans.\n\nTensions arose in the 18th century between these colonies and Britain, primarily due to taxation without representation, which culminated in events such as the Boston Tea Party in 1773. These events prompted the British Parliament to pass the Intolerable Acts in an attempt to suppress self-governance in the colonies.\n\nIn 1776, the colonies declared their independence, forming the United States of America. Under the leadership of General George Washington, the colonies won the Revolutionary War against Britain, achieving victory in 1783. The United States adopted its Constitution in 1789, followed by the Bill of Rights in 1791, which enshrined fundamental rights.\n\nGeorge Washington became the first President, and along with his adviser Alexander Hamilton, began shaping the new nation's governmental and economic structures. This marked the early stages of the United States' journey to becoming an independent and unified country. ", cost={'usage_including_cached_inference': {'total_cost': 0.00639, 'gpt-4o-2024-08-06': {'cost': 0.00639, 'prompt_tokens': 1356, 'completion_tokens': 300, 'total_tokens': 1656}}, 'usage_excluding_cached_inference': {'total_cost': 0}}, human_input=[])
+```
+
+## CrewAI Tools Integration
+
+CrewAI provides a variety of powerful tools designed for tasks such as
+web scraping, search, code interpretation, and more. These tools are
+easy to integrate into the AG2 framework, allowing you to enhance your
+agents with advanced capabilities. You can explore the full list of
+available tools in the [CrewAI
+Tools](https://github.com/crewAIInc/crewAI-tools/tree/main) repository.
+
+### Installation
+
+Install the required packages for integrating CrewAI tools into the AG2
+framework. This ensures all dependencies for both frameworks are
+installed.
+
+```bash
+pip install ag2[interop-crewai]
+```
+
+### Imports
+
+Import necessary modules and tools.
+
+-   [ScrapeWebsiteTool](https://docs.crewai.com/tools/scrapewebsitetool)
+    are the CrewAI tools for web scraping
+-   `AssistantAgent` and `UserProxyAgent` are core AG2 classes.
+-   `Interoperability`: This module acts as a bridge, making it easier
+    to integrate CrewAI tools with AG2’s architecture.
+
+```python
+import os
+
+from crewai_tools import ScrapeWebsiteTool
+
+from autogen import AssistantAgent, UserProxyAgent
+from autogen.interop import Interoperability
+```
+
+### Agent Configuration
+
+Configure the agents for the interaction.
+
+-   `config_list` defines the LLM configurations, including the model
+    and API key.
+-   `UserProxyAgent` simulates user inputs without requiring actual
+    human interaction (set to `NEVER`).
+-   `AssistantAgent` represents the AI agent, configured with the LLM
+    settings.
+
+```python
+config_list = [{"model": "gpt-4o", "api_key": os.environ["OPENAI_API_KEY"]}]
+user_proxy = UserProxyAgent(
+    name="User",
+    human_input_mode="NEVER",
+)
+
+chatbot = AssistantAgent(
+    name="chatbot",
+    llm_config={"config_list": config_list},
+)
+```
+
+### Tool Integration
+
+Initialize and register the CrewAI tool with AG2.
+
+-   `crewai_tool` is an instance of the
+    [ScrapeWebsiteTool](https://docs.crewai.com/tools/scrapewebsitetool)
+    from CrewAI.
+-   `Interoperability` converts the CrewAI tool to make it usable in
+    AG2.
+-   `register_for_execution` and `register_for_llm` allow the tool to
+    work with the UserProxyAgent and AssistantAgent.
+
+```python
+interop = Interoperability()
+crewai_tool = ScrapeWebsiteTool()
+ag2_tool = interop.convert_tool(tool=crewai_tool, type="crewai")
+
+ag2_tool.register_for_execution(user_proxy)
+ag2_tool.register_for_llm(chatbot)
+
+message = "Scrape the website https://ag2.ai/"
+
+chat_result = user_proxy.initiate_chat(recipient=chatbot, message=message, max_turns=2)
+```
+
+``` text
+User (to chatbot):
+
+Scrape the website https://ag2.ai/
+
+--------------------------------------------------------------------------------
+chatbot (to User):
+
+***** Suggested tool call (call_LdavPAKRVqcxteSplbAXedfp): Read_website_content *****
+Arguments: 
+{"args":{"website_url":"https://ag2.ai/"}}
+*************************************************************************************
+
+--------------------------------------------------------------------------------
+
+>>>>>>>> EXECUTING FUNCTION Read_website_content...
+Using Tool: Read website content
+User (to chatbot):
+
+***** Response from calling tool (call_LdavPAKRVqcxteSplbAXedfp) *****
+
+AgentOS
+Join our growing community of over 20,000 agent builders Join our growing community of over 20,000 agent builders The Open-Source AgentOS Build production-ready multi-agent systems in minutes, not months. Github Discord The End-to-End Platform for Multi-Agent Automation The End-to-End Platform for Multi-Agent Automation Flexible Agent Construction and Orchestration Create specialized agents that work together seamlessly. AG2 makes it easy to define roles, configure behaviors, and orchestrate collaboration - all through simple, intuitive code. → Assistant agents for problem-solving → Executor agents for taking action → Critic agents for validation → Group chat managers for coordination Built-in Conversation Patterns Built-in Conversation Patterns Stop wrestling with agent coordination. AG2 handles message routing, state management, and conversation flow automatically. → Two-agent conversations → Group chats with dynamic speaker selection → Sequential chats with context carryover → Nested conversations for modularity Seamless Human-AI collaboration Seamless Human-AI collaboration Seamlessly integrate human oversight and input into your agent workflows. → Configurable human input modes → Flexible intervention points → Optional human approval workflows → Interactive conversation interfaces → Context-aware human handoff Roadmap AG2 STUDIO → Visual agent system design → Real-time testing and debugging → One-click deployment to production → Perfect for prototyping and MVPs AG2 STUDIO → Visual agent system design → Real-time testing and debugging → One-click deployment to production → Perfect for prototyping and MVPs AG2 STUDIO → Visual agent system design → Real-time testing and debugging → One-click deployment to production → Perfect for prototyping and MVPs AG2 MARKETPLACE → Share and monetize your agents → Discover pre-built solution templates → Quick-start your agent development → Connect with other builders AG2 MARKETPLACE → Share and monetize your agents → Discover pre-built solution templates → Quick-start your agent development → Connect with other builders AG2 MARKETPLACE → Share and monetize your agents → Discover pre-built solution templates → Quick-start your agent development → Connect with other builders SCALING TOOLS → Zero to production deployment guides → Usage analytics and cost optimization → Team collaboration features → Enterprise-ready security controls SCALING TOOLS → Zero to production deployment guides → Usage analytics and cost optimization → Team collaboration features → Enterprise-ready security controls SCALING TOOLS → Zero to production deployment guides → Usage analytics and cost optimization → Team collaboration features → Enterprise-ready security controls AG2 STUDIO → Visual agent system design → Real-time testing and debugging → One-click deployment to production → Perfect for prototyping and MVPs AG2 STUDIO → Visual agent system design → Real-time testing and debugging → One-click deployment to production → Perfect for prototyping and MVPs AG2 MARKETPLACE → Share and monetize your agents → Discover pre-built solution templates → Quick-start your agent development → Connect with other builders AG2 MARKETPLACE → Share and monetize your agents → Discover pre-built solution templates → Quick-start your agent development → Connect with other builders SCALING TOOLS → Zero to production deployment guides → Usage analytics and cost optimization → Team collaboration features → Enterprise-ready security controls SCALING TOOLS → Zero to production deployment guides → Usage analytics and cost optimization → Team collaboration features → Enterprise-ready security controls Whether you're a solo founder prototyping the next big AI product, or an enterprise team deploying at scale we're building AG2 for you. This is AgentOS - making multi-agent development accessible to everyone. Github Join Our Growing Community Join Our Growing Community → 20,000+ active agent builders → Daily technical discussions → Weekly community calls → Open RFC process → Regular contributor events (Coming soon) Discord Problem Features Roadmap Community Documentation Problem Features Roadmap Community Documentation Problem Features Roadmap Community Documentation
+
+**********************************************************************
+
+--------------------------------------------------------------------------------
+chatbot (to User):
+
+The website https://ag2.ai/ provides the following information:
+
+- **AgentOS Community**: Over 20,000 agent builders are part of the community.
+- **Open-Source AgentOS**: It focuses on building production-ready multi-agent systems quickly.
+- **Platform for Multi-Agent Automation**: Includes flexible agent construction and orchestration, and built-in conversation patterns.
+  - **Agent Types**:
+    - Assistant agents for problem-solving.
+    - Executor agents for taking action.
+    - Critic agents for validation.
+    - Group chat managers for coordination.
+  - **Conversation Patterns**:
+    - Two-agent conversations.
+    - Group chats with dynamic speaker selection.
+    - Sequential and nested conversations.
+
+- **Human-AI Collaboration**: Allows integration of human oversight and input with agents.
+- **AG2 Studio**: A tool for visual agent system design, real-time testing, debugging, and deployment.
+- **AG2 Marketplace**: Platform for sharing, monetizing agents, and discovering templates.
+- **Scaling Tools**: Guides for deployment, usage analytics, cost optimization, and team collaboration features.
+  
+The tagline suggests that AgentOS is designed to make multi-agent development accessible, catering to both solo founders and enterprise teams.
+
+TERMINATE
+
+--------------------------------------------------------------------------------
+```
+
+```python
+print(chat_result.summary)
+```
+
+``` text
+The website https://ag2.ai/ provides the following information:
+
+- **AgentOS Community**: Over 20,000 agent builders are part of the community.
+- **Open-Source AgentOS**: It focuses on building production-ready multi-agent systems quickly.
+- **Platform for Multi-Agent Automation**: Includes flexible agent construction and orchestration, and built-in conversation patterns.
+  - **Agent Types**:
+    - Assistant agents for problem-solving.
+    - Executor agents for taking action.
+    - Critic agents for validation.
+    - Group chat managers for coordination.
+  - **Conversation Patterns**:
+    - Two-agent conversations.
+    - Group chats with dynamic speaker selection.
+    - Sequential and nested conversations.
+
+- **Human-AI Collaboration**: Allows integration of human oversight and input with agents.
+- **AG2 Studio**: A tool for visual agent system design, real-time testing, debugging, and deployment.
+- **AG2 Marketplace**: Platform for sharing, monetizing agents, and discovering templates.
+- **Scaling Tools**: Guides for deployment, usage analytics, cost optimization, and team collaboration features.
+  
+The tagline suggests that AgentOS is designed to make multi-agent development accessible, catering to both solo founders and enterprise teams.
+
+```
+
+## PydanticAI Tools Integration
+
+[PydanticAI](https://ai.pydantic.dev/) is a newer framework that offers
+powerful capabilities for working with LLMs. Although it currently does
+not have a repository with pre-built tools, it provides features like
+**dependency injection**, allowing you to inject a “Context” into a tool
+for better execution without relying on LLMs. This context can be used
+for passing parameters or managing state during the execution of a tool.
+While the framework is still growing, you can integrate its tools into
+AG2 to enhance agent capabilities, especially for tasks that involve
+structured data and context-driven logic.
+
+### Installation
+
+To integrate LangChain tools into the AG2 framework, install the
+required dependencies:
+
+```bash
+pip install ag2[interop-pydantic-ai]
+```
+
+### Imports
+
+Import necessary modules and tools.
+
+-   [BaseModel](https://docs.pydantic.dev/latest/api/base_model/): Used
+    to define data structures for tool inputs and outputs.
+-   [RunContext](https://ai.pydantic.dev/api/tools/#pydantic_ai.tools.RunContext):
+    Provides context during the execution of tools.
+-   [PydanticAITool](https://ai.pydantic.dev/api/tools/#pydantic_ai.tools.Tool):
+    Represents a tool in the PydanticAI framework.
+-   `AssistantAgent` and `UserProxyAgent`: Agents that facilitate
+    communication in the AG2 framework.
+-   `Interoperability`: This module acts as a bridge, making it easier
+    to integrate PydanticAI tools with AG2’s architecture.
+
+```python
+import os
+from typing import Optional
+
+from pydantic import BaseModel
+from pydantic_ai import RunContext
+from pydantic_ai.tools import Tool as PydanticAITool
+
+from autogen import AssistantAgent, UserProxyAgent
+from autogen.interop import Interoperability
+```
+
+### Agent Configuration
+
+Configure the agents for the interaction.
+
+-   `config_list` defines the LLM configurations, including the model
+    and API key.
+-   `UserProxyAgent` simulates user inputs without requiring actual
+    human interaction (set to `NEVER`).
+-   `AssistantAgent` represents the AI agent, configured with the LLM
+    settings.
+
+```python
+config_list = [{"model": "gpt-4o", "api_key": os.environ["OPENAI_API_KEY"]}]
+user_proxy = UserProxyAgent(
+    name="User",
+    human_input_mode="NEVER",
+)
+
+chatbot = AssistantAgent(
+    name="chatbot",
+    llm_config={"config_list": config_list},
+)
+```
+
+### Tool Integration
+
+Integrate the PydanticAI tool with AG2.
+
+-   Define a `Player` model using
+    [BaseModel](https://docs.pydantic.dev/latest/api/base_model/) to
+    structure the input data.
+-   Use
+    [RunContext](https://ai.pydantic.dev/api/tools/#pydantic_ai.tools.RunContext)
+    to securely inject dependencies (like the `Player` instance) into
+    the tool function without exposing them to the LLM.
+-   Implement `get_player` to define the tool’s functionality, accessing
+    `ctx.deps` for injected data.
+-   Convert the tool to an AG2-compatible format with `Interoperability`
+    and register it for execution and LLM communication.
+-   Convert the PydanticAI tool into an AG2-compatible format using
+    `convert_tool`.
+-   Register the tool for both execution and communication with the LLM
+    by associating it with the `user_proxy` and `chatbot`.
+
+```python
+class Player(BaseModel):
+    name: str
+    age: int
+
+
+def get_player(ctx: RunContext[Player], additional_info: Optional[str] = None) -> str:  # type: ignore[valid-type]
+    """Get the player's name.
+
+    Args:
+        additional_info: Additional information which can be used.
+    """
+    return f"Name: {ctx.deps.name}, Age: {ctx.deps.age}, Additional info: {additional_info}"  # type: ignore[attr-defined]
+
+
+interop = Interoperability()
+pydantic_ai_tool = PydanticAITool(get_player, takes_ctx=True)
+
+# player will be injected as a dependency
+player = Player(name="Luka", age=25)
+ag2_tool = interop.convert_tool(tool=pydantic_ai_tool, type="pydanticai", deps=player)
+
+ag2_tool.register_for_execution(user_proxy)
+ag2_tool.register_for_llm(chatbot)
+```
+
+Initiate a conversation between the `UserProxyAgent` and the
+`AssistantAgent`.
+
+-   Use the `initiate_chat` method to send a message from the
+    `user_proxy` to the `chatbot`.
+-   In this example, the user requests the chatbot to retrieve player
+    information, providing “goal keeper” as additional context.
+-   The `Player` instance is securely injected into the tool using
+    [RunContext](https://ai.pydantic.dev/api/tools/#pydantic_ai.tools.RunContext),
+    ensuring the chatbot can retrieve and use this data during the
+    interaction.
+
+```python
+user_proxy.initiate_chat(
+    recipient=chatbot, message="Get player, for additional information use 'goal keeper'", max_turns=3
+)
+```
+
+``` text
+User (to chatbot):
+
+Get player, for additional information use 'goal keeper'
+
+--------------------------------------------------------------------------------
+chatbot (to User):
+
+***** Suggested tool call (call_6zAckrEDxxbffyNc4XtX5rIM): get_player *****
+Arguments: 
+{"additional_info":"goal keeper"}
+***************************************************************************
+
+--------------------------------------------------------------------------------
+
+>>>>>>>> EXECUTING FUNCTION get_player...
+User (to chatbot):
+
+***** Response from calling tool (call_6zAckrEDxxbffyNc4XtX5rIM) *****
+Name: Luka, Age: 25, Additional info: goal keeper
+**********************************************************************
+
+--------------------------------------------------------------------------------
+chatbot (to User):
+
+The player's name is Luka, aged 25, and he is a goal keeper. TERMINATE
+
+--------------------------------------------------------------------------------
+User (to chatbot):
+
+
+
+--------------------------------------------------------------------------------
+chatbot (to User):
+
+It looks like there isn't any additional input from your side. If you need further assistance, feel free to ask! TERMINATE
+
+--------------------------------------------------------------------------------
+```
+
+``` text
+ChatResult(chat_id=None, chat_history=[{'content': "Get player, for additional information use 'goal keeper'", 'role': 'assistant', 'name': 'User'}, {'tool_calls': [{'id': 'call_6zAckrEDxxbffyNc4XtX5rIM', 'function': {'arguments': '{"additional_info":"goal keeper"}', 'name': 'get_player'}, 'type': 'function'}], 'content': None, 'role': 'assistant'}, {'content': 'Name: Luka, Age: 25, Additional info: goal keeper', 'tool_responses': [{'tool_call_id': 'call_6zAckrEDxxbffyNc4XtX5rIM', 'role': 'tool', 'content': 'Name: Luka, Age: 25, Additional info: goal keeper'}], 'role': 'tool', 'name': 'User'}, {'content': "The player's name is Luka, aged 25, and he is a goal keeper. TERMINATE", 'role': 'user', 'name': 'chatbot'}, {'content': '', 'role': 'assistant', 'name': 'User'}, {'content': "It looks like there isn't any additional input from your side. If you need further assistance, feel free to ask! TERMINATE", 'role': 'user', 'name': 'chatbot'}], summary="It looks like there isn't any additional input from your side. If you need further assistance, feel free to ask! ", cost={'usage_including_cached_inference': {'total_cost': 0.0048325, 'gpt-4o-2024-08-06': {'cost': 0.0048325, 'prompt_tokens': 1677, 'completion_tokens': 64, 'total_tokens': 1741}}, 'usage_excluding_cached_inference': {'total_cost': 0}}, human_input=[])
+```

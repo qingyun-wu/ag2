@@ -1,0 +1,307 @@
+---
+sidebarTitle: code_utils
+title: code_utils
+---
+
+### content\_str
+
+```python
+def content_str(
+    content: Union[str, list[Union[UserMessageTextContentPart,
+                                   UserMessageImageContentPart]], None]
+) -> str
+```
+
+Converts the `content` field of an OpenAI message into a string format.
+
+This function processes content that may be a string, a list of mixed text and image URLs, or None,
+and converts it into a string. Text is directly appended to the result string, while image URLs are
+represented by a placeholder image token. If the content is None, an empty string is returned.
+
+**Arguments**:
+
+  - content (Union[str, List, None]): The content to be processed. Can be a string, a list of dictionaries
+  representing text and image URLs, or None.
+  
+
+**Returns**:
+
+- `str` - A string representation of the input content. Image URLs are replaced with an image token.
+  
+
+**Notes**:
+
+  - The function expects each dictionary in the list to have a "type" key that is either "text" or "image_url".
+  For "text" type, the "text" key's value is appended to the result. For "image_url", an image token is appended.
+  - This function is useful for handling content that may include both text and image references, especially
+  in contexts where images need to be represented as placeholders.
+
+### infer\_lang
+
+```python
+def infer_lang(code: str) -> str
+```
+
+Infer the language for the code.
+TODO: make it robust.
+
+### extract\_code
+
+```python
+def extract_code(
+        text: Union[str, list],
+        pattern: str = CODE_BLOCK_PATTERN,
+        detect_single_line_code: bool = False) -> list[tuple[str, str]]
+```
+
+Extract code from a text.
+
+**Arguments**:
+
+- `text` _str or List_ - The content to extract code from. The content can be
+  a string or a list, as returned by standard GPT or multimodal GPT.
+- `pattern` _str, optional_ - The regular expression pattern for finding the
+  code block. Defaults to CODE_BLOCK_PATTERN.
+- `detect_single_line_code` _bool, optional_ - Enable the new feature for
+  extracting single line code. Defaults to False.
+  
+
+**Returns**:
+
+- `list` - A list of tuples, each containing the language and the code.
+  If there is no code block in the input text, the language would be "unknown".
+  If there is code block but the language is not specified, the language would be "".
+
+### generate\_code
+
+```python
+def generate_code(pattern: str = CODE_BLOCK_PATTERN,
+                  **config) -> tuple[str, float]
+```
+
+`(openai<1)` Generate code.
+
+**Arguments**:
+
+- `pattern` _Optional, str_ - The regular expression pattern for finding the code block.
+  The default pattern is for finding a code block in a markdown file.
+- `config` _Optional, dict_ - The configuration for the API call.
+  
+
+**Returns**:
+
+- `str` - The generated code.
+- `float` - The cost of the generation.
+
+### improve\_function
+
+```python
+def improve_function(file_name, func_name, objective, **config)
+```
+
+`(openai<1)` Improve the function to achieve the objective.
+
+### improve\_code
+
+```python
+def improve_code(files, objective, suggest_only=True, **config)
+```
+
+`(openai<1)` Improve the code to achieve a given objective.
+
+**Arguments**:
+
+- `files` _list_ - A list of file names containing the source code.
+- `objective` _str_ - The objective to achieve.
+- `suggest_only` _bool_ - Whether to return only the suggestions or the improved code.
+- `config` _Optional, dict_ - The configuration for the API call.
+  
+
+**Returns**:
+
+- `str` - The improved code if suggest_only=False; a list of suggestions if suggest_only=True (default).
+- `float` - The cost of the generation.
+
+### is\_docker\_running
+
+```python
+def is_docker_running() -> bool
+```
+
+Check if docker is running.
+
+**Returns**:
+
+- `bool` - True if docker is running; False otherwise.
+
+### in\_docker\_container
+
+```python
+def in_docker_container() -> bool
+```
+
+Check if the code is running in a docker container.
+
+**Returns**:
+
+- `bool` - True if the code is running in a docker container; False otherwise.
+
+### execute\_code
+
+```python
+def execute_code(
+        code: Optional[str] = None,
+        timeout: Optional[int] = None,
+        filename: Optional[str] = None,
+        work_dir: Optional[str] = None,
+        use_docker: Union[list[str], str, bool] = SENTINEL,
+        lang: Optional[str] = "python") -> tuple[int, str, Optional[str]]
+```
+
+Execute code in a docker container.
+This function is not tested on MacOS.
+
+**Arguments**:
+
+- `code` _Optional, str_ - The code to execute.
+  If None, the code from the file specified by filename will be executed.
+  Either code or filename must be provided.
+- `timeout` _Optional, int_ - The maximum execution time in seconds.
+  If None, a default timeout will be used. The default timeout is 600 seconds. On Windows, the timeout is not enforced when use_docker=False.
+- `filename` _Optional, str_ - The file name to save the code or where the code is stored when `code` is None.
+  If None, a file with a randomly generated name will be created.
+  The randomly generated file will be deleted after execution.
+  The file name must be a relative path. Relative paths are relative to the working directory.
+- `work_dir` _Optional, str_ - The working directory for the code execution.
+  If None, a default working directory will be used.
+  The default working directory is the "extensions" directory under
+  "path_to_autogen".
+- `use_docker` _list, str or bool_ - The docker image to use for code execution.
+  Default is True, which means the code will be executed in a docker container. A default list of images will be used.
+  If a list or a str of image name(s) is provided, the code will be executed in a docker container
+  with the first image successfully pulled.
+  If False, the code will be executed in the current environment.
+  Expected behaviour:
+  - If `use_docker` is not set (i.e. left default to True) or is explicitly set to True and the docker package is available, the code will run in a Docker container.
+  - If `use_docker` is not set (i.e. left default to True) or is explicitly set to True but the Docker package is missing or docker isn't running, an error will be raised.
+  - If `use_docker` is explicitly set to False, the code will run natively.
+  If the code is executed in the current environment,
+  the code must be trusted.
+- `lang` _Optional, str_ - The language of the code. Default is "python".
+  
+
+**Returns**:
+
+- `int` - 0 if the code executes successfully.
+- `str` - The error message if the code fails to execute; the stdout otherwise.
+- `image` - The docker image name after container run when docker is used.
+
+### generate\_assertions
+
+```python
+def generate_assertions(definition: str, **config) -> tuple[str, float]
+```
+
+`(openai<1)` Generate assertions for a function.
+
+**Arguments**:
+
+- `definition` _str_ - The function definition, including the signature and docstr.
+- `config` _Optional, dict_ - The configuration for the API call.
+  
+
+**Returns**:
+
+- `str` - The generated assertions.
+- `float` - The cost of the generation.
+
+### eval\_function\_completions
+
+```python
+def eval_function_completions(responses: list[str],
+                              definition: str,
+                              test: Optional[str] = None,
+                              entry_point: Optional[str] = None,
+                              assertions: Optional[Union[str, Callable[
+                                  [str], tuple[str, float]]]] = None,
+                              timeout: Optional[float] = 3,
+                              use_docker: Optional[bool] = True) -> dict
+```
+
+`(openai<1)` Select a response from a list of responses for the function completion task (using generated assertions), and/or evaluate if the task is successful using a gold test.
+
+**Arguments**:
+
+- `responses` _list_ - The list of responses.
+- `definition` _str_ - The input definition.
+- `test` _Optional, str_ - The test code.
+- `entry_point` _Optional, str_ - The name of the function.
+- `assertions` _Optional, str or Callable_ - The assertion code which serves as a filter of the responses, or an assertion generator.
+  When provided, only the responses that pass the assertions will be considered for the actual test (if provided).
+- `timeout` _Optional, float_ - The timeout for executing the code.
+  
+
+**Returns**:
+
+- `dict` - The success metrics.
+
+## PassAssertionFilter
+
+```python
+class PassAssertionFilter()
+```
+
+### pass\_assertions
+
+```python
+def pass_assertions(context, response, **_)
+```
+
+`(openai<1)` Check if the response passes the assertions.
+
+### implement
+
+```python
+def implement(
+    definition: str,
+    configs: Optional[list[dict]] = None,
+    assertions: Optional[Union[str,
+                               Callable[[str],
+                                        tuple[str,
+                                              float]]]] = generate_assertions
+) -> tuple[str, float]
+```
+
+`(openai<1)` Implement a function from a definition.
+
+**Arguments**:
+
+- `definition` _str_ - The function definition, including the signature and docstr.
+- `configs` _list_ - The list of configurations for completion.
+- `assertions` _Optional, str or Callable_ - The assertion code which serves as a filter of the responses, or an assertion generator.
+  
+
+**Returns**:
+
+- `str` - The implementation.
+- `float` - The cost of the implementation.
+- `int` - The index of the configuration which generates the implementation.
+
+### create\_virtual\_env
+
+```python
+def create_virtual_env(dir_path: str, **env_args) -> SimpleNamespace
+```
+
+Creates a python virtual environment and returns the context.
+
+**Arguments**:
+
+- `dir_path` _str_ - Directory path where the env will be created.
+- `**env_args` - Any extra args to pass to the `EnvBuilder`
+  
+
+**Returns**:
+
+- `SimpleNamespace` - the virtual env context object.
+

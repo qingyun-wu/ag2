@@ -1,0 +1,115 @@
+---
+sidebarTitle: base
+title: coding.base
+---
+
+## CodeBlock
+
+```python
+class CodeBlock(BaseModel)
+```
+
+(Experimental) A class that represents a code block.
+
+## CodeResult
+
+```python
+class CodeResult(BaseModel)
+```
+
+(Experimental) A class that represents the result of a code execution.
+
+## CodeExtractor
+
+```python
+class CodeExtractor(Protocol)
+```
+
+(Experimental) A code extractor class that extracts code blocks from a message.
+
+### extract\_code\_blocks
+
+```python
+def extract_code_blocks(
+    message: str
+    | list[Union[UserMessageTextContentPart, UserMessageImageContentPart]]
+    | None
+) -> list[CodeBlock]
+```
+
+(Experimental) Extract code blocks from a message.
+
+**Arguments**:
+
+- `message` _str_ - The message to extract code blocks from.
+  
+
+**Returns**:
+
+- `List[CodeBlock]` - The extracted code blocks.
+
+## CodeExecutor
+
+```python
+@runtime_checkable
+class CodeExecutor(Protocol)
+```
+
+(Experimental) A code executor class that executes code blocks and returns the result.
+
+### code\_extractor
+
+```python
+@property
+def code_extractor() -> CodeExtractor
+```
+
+(Experimental) The code extractor used by this code executor.
+
+### execute\_code\_blocks
+
+```python
+def execute_code_blocks(code_blocks: list[CodeBlock]) -> CodeResult
+```
+
+(Experimental) Execute code blocks and return the result.
+
+This method should be implemented by the code executor.
+
+**Arguments**:
+
+- `code_blocks` _List[CodeBlock]_ - The code blocks to execute.
+  
+
+**Returns**:
+
+- `CodeResult` - The result of the code execution.
+
+### restart
+
+```python
+def restart() -> None
+```
+
+(Experimental) Restart the code executor.
+
+This method should be implemented by the code executor.
+
+This method is called when the agent is reset.
+
+## IPythonCodeResult
+
+```python
+class IPythonCodeResult(CodeResult)
+```
+
+(Experimental) A code result class for IPython code executor.
+
+## CommandLineCodeResult
+
+```python
+class CommandLineCodeResult(CodeResult)
+```
+
+(Experimental) A code result class for command line code executor.
+

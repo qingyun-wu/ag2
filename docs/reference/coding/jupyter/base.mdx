@@ -1,0 +1,48 @@
+---
+sidebarTitle: base
+title: coding.jupyter.base
+---
+
+## JupyterConnectionInfo
+
+```python
+@dataclass
+class JupyterConnectionInfo()
+```
+
+(Experimental)
+
+#### host
+
+`str` - Host of the Jupyter gateway server
+
+#### use\_https
+
+`bool` - Whether to use HTTPS
+
+#### port
+
+`Optional[int]` - Port of the Jupyter gateway server. If None, the default port is used
+
+#### token
+
+`Optional[str]` - Token for authentication. If None, no token is used
+
+## JupyterConnectable
+
+```python
+@runtime_checkable
+class JupyterConnectable(Protocol)
+```
+
+(Experimental)
+
+### connection\_info
+
+```python
+@property
+def connection_info() -> JupyterConnectionInfo
+```
+
+Return the connection information for this connectable.
+

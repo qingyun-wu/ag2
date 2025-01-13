@@ -1,0 +1,24 @@
+---
+sidebarTitle: arxiv_download
+title: agentchat.contrib.captainagent.tools.information_retrieval.arxiv_download
+---
+
+### arxiv\_download
+
+```python
+@with_requirements(["arxiv"], ["arxiv"])
+def arxiv_download(id_list: list, download_dir="./")
+```
+
+Downloads PDF files from ArXiv based on a list of arxiv paper IDs.
+
+**Arguments**:
+
+- `id_list` _list_ - A list of paper IDs to download. e.g. [2302.00006v1]
+- `download_dir` _str, optional_ - The directory to save the downloaded PDF files. Defaults to './'.
+  
+
+**Returns**:
+
+- `list` - A list of paths to the downloaded PDF files.
+

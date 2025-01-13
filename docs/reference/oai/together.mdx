@@ -1,0 +1,95 @@
+---
+sidebarTitle: together
+title: oai.together
+---
+
+Create an OpenAI-compatible client using Together.AI's API.
+
+**Example**:
+
+    ```python
+    llm_config = {
+        "config_list": [
+            {
+                "api_type": "together",
+                "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                "api_key": os.environ.get("TOGETHER_API_KEY"),
+            }
+        ]
+    }
+
+    agent = autogen.AssistantAgent("my_agent", llm_config=llm_config)
+    ```
+  
+  Install Together.AI python library using: pip install --upgrade together
+  
+  Resources:
+  - https://docs.together.ai/docs/inference-python
+
+## TogetherClient
+
+```python
+class TogetherClient()
+```
+
+Client for Together.AI's API.
+
+### \_\_init\_\_
+
+```python
+def __init__(**kwargs)
+```
+
+Requires api_key or environment variable to be set
+
+**Arguments**:
+
+- `api_key` _str_ - The API key for using Together.AI (or environment variable TOGETHER_API_KEY needs to be set)
+
+### message\_retrieval
+
+```python
+def message_retrieval(response) -> list
+```
+
+Retrieve and return a list of strings or a list of Choice.Message from the response.
+
+NOTE: if a list of Choice.Message is returned, it currently needs to contain the fields of OpenAI's ChatCompletion Message object,
+since that is expected for function or tool calling in the rest of the codebase at the moment, unless a custom agent is being used.
+
+### get\_usage
+
+```python
+@staticmethod
+def get_usage(response) -> dict
+```
+
+Return usage summary of the response using RESPONSE_USAGE_KEYS.
+
+### parse\_params
+
+```python
+def parse_params(params: dict[str, Any]) -> dict[str, Any]
+```
+
+Loads the parameters for Together.AI API from the passed in parameters and returns a validated set. Checks types, ranges, and sets defaults
+
+### oai\_messages\_to\_together\_messages
+
+```python
+def oai_messages_to_together_messages(
+        messages: list[dict[str, Any]]) -> list[dict[str, Any]]
+```
+
+Convert messages from OAI format to Together.AI format.
+We correct for any specific role orders and types.
+
+### calculate\_together\_cost
+
+```python
+def calculate_together_cost(input_tokens: int, output_tokens: int,
+                            model_name: str) -> float
+```
+
+Cost calculation for inference
+

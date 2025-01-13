@@ -1,0 +1,24 @@
+---
+sidebarTitle: compute_currency_conversion
+title: agentchat.contrib.captainagent.tools.math.compute_currency_conversion
+---
+
+### compute\_currency\_conversion
+
+```python
+@with_requirements(["sympy"])
+def compute_currency_conversion(amount, exchange_rate)
+```
+
+Compute the currency conversion of the given amount using the provided exchange rate.
+
+**Arguments**:
+
+- `amount` _float_ - The amount to be converted.
+- `exchange_rate` _float_ - The exchange rate to use for the conversion, represented as the amount of second currency equivalent to one unit of the first currency.
+  
+
+**Returns**:
+
+- `float` - The converted amount.
+

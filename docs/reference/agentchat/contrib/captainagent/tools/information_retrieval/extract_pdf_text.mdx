@@ -1,0 +1,25 @@
+---
+sidebarTitle: extract_pdf_text
+title: agentchat.contrib.captainagent.tools.information_retrieval.extract_pdf_text
+---
+
+### extract\_pdf\_text
+
+```python
+@with_requirements(["PyMuPDF"])
+def extract_pdf_text(pdf_path, page_number=None)
+```
+
+Extracts text from a specified page or the entire PDF file.
+
+**Arguments**:
+
+- `pdf_path` _str_ - The path to the PDF file.
+- `page_number` _int, optional_ - The page number to extract (starting from 0). If not provided,
+  the function will extract text from the entire PDF file.
+  
+
+**Returns**:
+
+- `str` - The extracted text.
+

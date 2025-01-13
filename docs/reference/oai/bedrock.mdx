@@ -1,0 +1,169 @@
+---
+sidebarTitle: bedrock
+title: oai.bedrock
+---
+
+Create a compatible client for the Amazon Bedrock Converse API.
+
+Example usage:
+Install the `boto3` package by running `pip install --upgrade boto3`.
+- https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html
+
+```python
+import autogen
+
+config_list = [
+    {
+        "api_type": "bedrock",
+        "model": "meta.llama3-1-8b-instruct-v1:0",
+        "aws_region": "us-west-2",
+        "aws_access_key": "",
+        "aws_secret_key": "",
+        "price": [0.003, 0.015],
+    }
+]
+
+assistant = autogen.AssistantAgent("assistant", llm_config={"config_list": config_list})
+```
+
+## BedrockClient
+
+```python
+class BedrockClient()
+```
+
+Client for Amazon's Bedrock Converse API.
+
+### \_\_init\_\_
+
+```python
+def __init__(**kwargs: Any)
+```
+
+Initialises BedrockClient for Amazon's Bedrock Converse API
+
+### message\_retrieval
+
+```python
+def message_retrieval(response)
+```
+
+Retrieve the messages from the response.
+
+### parse\_custom\_params
+
+```python
+def parse_custom_params(params: dict[str, Any])
+```
+
+Parses custom parameters for logic in this client class
+
+### parse\_params
+
+```python
+def parse_params(
+        params: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]
+```
+
+Loads the valid parameters required to invoke Bedrock Converse
+Returns a tuple of (base_params, additional_params)
+
+### create
+
+```python
+def create(params) -> ChatCompletion
+```
+
+Run Amazon Bedrock inference and return AutoGen response
+
+### cost
+
+```python
+def cost(response: ChatCompletion) -> float
+```
+
+Calculate the cost of the response.
+
+### get\_usage
+
+```python
+@staticmethod
+def get_usage(response) -> dict
+```
+
+Get the usage of tokens and their cost information.
+
+### extract\_system\_messages
+
+```python
+def extract_system_messages(messages: list[dict]) -> list
+```
+
+Extract the system messages from the list of messages.
+
+**Arguments**:
+
+- `messages` _list[dict]_ - List of messages.
+  
+
+**Returns**:
+
+- `List[SystemMessage]` - List of System messages.
+
+### oai\_messages\_to\_bedrock\_messages
+
+```python
+def oai_messages_to_bedrock_messages(
+        messages: list[dict[str, Any]], has_tools: bool,
+        supports_system_prompts: bool) -> list[dict]
+```
+
+Convert messages from OAI format to Bedrock format.
+We correct for any specific role orders and types, etc.
+AWS Bedrock requires messages to alternate between user and assistant roles. This function ensures that the messages
+are in the correct order and format for Bedrock by inserting "Please continue" messages as needed.
+This is the same method as the one in the Autogen Anthropic client
+
+### parse\_image
+
+```python
+def parse_image(image_url: str) -> tuple[bytes, str]
+```
+
+Try to get the raw data from an image url.
+
+Ref: https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ImageSource.html
+returns a tuple of (Image Data, Content Type)
+
+### format\_tool\_calls
+
+```python
+def format_tool_calls(content)
+```
+
+Converts Converse API response tool calls to AutoGen format
+
+### convert\_stop\_reason\_to\_finish\_reason
+
+```python
+def convert_stop_reason_to_finish_reason(
+    stop_reason: str
+) -> Literal["stop", "length", "tool_calls", "content_filter"]
+```
+
+Converts Bedrock finish reasons to our finish reasons, according to OpenAI:
+
+- stop: if the model hit a natural stop point or a provided stop sequence,
+- length: if the maximum number of tokens specified in the request was reached,
+- content_filter: if content was omitted due to a flag from our content filters,
+- tool_calls: if the model called a tool
+
+### calculate\_cost
+
+```python
+def calculate_cost(input_tokens: int, output_tokens: int,
+                   model_id: str) -> float
+```
+
+Calculate the cost of the completion using the Bedrock pricing.
+

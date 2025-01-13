@@ -1,0 +1,34 @@
+---
+sidebarTitle: neo4j_graph_rag_capability
+title: agentchat.contrib.graph_rag.neo4j_graph_rag_capability
+---
+
+## Neo4jGraphCapability
+
+```python
+class Neo4jGraphCapability(GraphRagCapability)
+```
+
+The Neo4j graph capability integrates Neo4j Property graph into a graph rag agent.
+Ref: https://neo4j.com/labs/genai-ecosystem/llamaindex/#_property_graph_constructing_modules
+
+
+For usage, please refer to example notebook/agentchat_graph_rag_neo4j.ipynb
+
+### \_\_init\_\_
+
+```python
+def __init__(query_engine: Neo4jGraphQueryEngine)
+```
+
+Initialize GraphRAG capability with a graph query engine
+
+### add\_to\_agent
+
+```python
+def add_to_agent(agent: UserProxyAgent)
+```
+
+Add Neo4j GraphRAG capability to a UserProxyAgent.
+The restriction to a UserProxyAgent to make sure the returned message only contains information retrieved from the graph DB instead of any LLMs.
+

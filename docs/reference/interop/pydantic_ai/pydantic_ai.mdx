@@ -1,0 +1,81 @@
+---
+sidebarTitle: pydantic_ai
+title: interop.pydantic_ai.pydantic_ai
+---
+
+## PydanticAIInteroperability
+
+```python
+@register_interoperable_class("pydanticai")
+class PydanticAIInteroperability()
+```
+
+A class implementing the `Interoperable` protocol for converting Pydantic AI tools
+into a general `Tool` format.
+
+This class takes a `PydanticAITool` and converts it into a standard `Tool` object,
+ensuring compatibility between Pydantic AI tools and other systems that expect
+the `Tool` format. It also provides a mechanism for injecting context parameters
+into the tool's function.
+
+### inject\_params
+
+```python
+@staticmethod
+def inject_params(ctx: Any, tool: Any) -> Callable[..., Any]
+```
+
+Wraps the tool's function to inject context parameters and handle retries.
+
+This method ensures that context parameters are properly passed to the tool
+when invoked and that retries are managed according to the tool's settings.
+
+**Arguments**:
+
+- `ctx` _Optional[RunContext[Any]]_ - The run context, which may include dependencies and retry information.
+- `tool` _PydanticAITool_ - The Pydantic AI tool whose function is to be wrapped.
+  
+
+**Returns**:
+
+  Callable[..., Any]: A wrapped function that includes context injection and retry handling.
+  
+
+**Raises**:
+
+- `ValueError` - If the tool fails after the maximum number of retries.
+
+### convert\_tool
+
+```python
+@classmethod
+def convert_tool(cls,
+                 tool: Any,
+                 deps: Any = None,
+                 **kwargs: Any) -> AG2PydanticAITool
+```
+
+Converts a given Pydantic AI tool into a general `Tool` format.
+
+This method verifies that the provided tool is a valid `PydanticAITool`,
+handles context dependencies if necessary, and returns a standardized `Tool` object.
+
+**Arguments**:
+
+- `tool` _Any_ - The tool to convert, expected to be an instance of `PydanticAITool`.
+- `deps` _Any, optional_ - The dependencies to inject into the context, required if
+  the tool takes a context. Defaults to None.
+- `**kwargs` _Any_ - Additional arguments that are not used in this method.
+  
+
+**Returns**:
+
+- `AG2PydanticAITool` - A standardized `Tool` object converted from the Pydantic AI tool.
+  
+
+**Raises**:
+
+- `ValueError` - If the provided tool is not an instance of `PydanticAITool`, or if
+  dependencies are missing for tools that require a context.
+- `UserWarning` - If the `deps` argument is provided for a tool that does not take a context.
+

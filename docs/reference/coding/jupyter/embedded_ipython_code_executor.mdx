@@ -1,0 +1,68 @@
+---
+sidebarTitle: embedded_ipython_code_executor
+title: coding.jupyter.embedded_ipython_code_executor
+---
+
+## EmbeddedIPythonCodeExecutor
+
+```python
+class EmbeddedIPythonCodeExecutor(BaseModel)
+```
+
+(Experimental) A code executor class that executes code statefully using an embedded
+IPython kernel managed by this class.
+
+**This will execute LLM generated code on the local machine.**
+
+Each execution is stateful and can access variables created from previous
+executions in the same session. The kernel must be installed before using
+this class. The kernel can be installed using the following command:
+`python -m ipykernel install --user --name {kernel_name}`
+where `kernel_name` is the name of the kernel to install.
+
+**Arguments**:
+
+- `timeout` _int_ - The timeout for code execution, by default 60.
+- `kernel_name` _str_ - The kernel name to use. Make sure it is installed.
+  By default, it is "python3".
+- `output_dir` _str_ - The directory to save output files, by default ".".
+
+### code\_extractor
+
+```python
+@property
+def code_extractor() -> CodeExtractor
+```
+
+(Experimental) Export a code extractor that can be used by an agent.
+
+### execute\_code\_blocks
+
+```python
+def execute_code_blocks(code_blocks: list[CodeBlock]) -> IPythonCodeResult
+```
+
+(Experimental) Execute a list of code blocks and return the result.
+
+This method executes a list of code blocks as cells in an IPython kernel
+managed by this class.
+See: https://jupyter-client.readthedocs.io/en/stable/messaging.html
+for the message protocol.
+
+**Arguments**:
+
+- `code_blocks` _List[CodeBlock]_ - A list of code blocks to execute.
+  
+
+**Returns**:
+
+- `IPythonCodeResult` - The result of the code execution.
+
+### restart
+
+```python
+def restart() -> None
+```
+
+(Experimental) Restart a new session.
+

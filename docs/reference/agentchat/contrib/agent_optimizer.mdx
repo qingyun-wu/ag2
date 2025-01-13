@@ -1,0 +1,72 @@
+---
+sidebarTitle: agent_optimizer
+title: agentchat.contrib.agent_optimizer
+---
+
+### execute\_func
+
+```python
+def execute_func(name, packages, code, **args)
+```
+
+The wrapper for generated functions.
+
+## AgentOptimizer
+
+```python
+class AgentOptimizer()
+```
+
+Base class for optimizing AutoGen agents. Specifically, it is used to optimize the functions used in the agent.
+More information could be found in the following paper: https://arxiv.org/abs/2402.11359.
+
+### \_\_init\_\_
+
+```python
+def __init__(max_actions_per_step: int,
+             llm_config: dict,
+             optimizer_model: Optional[str] = "gpt-4-1106-preview")
+```
+
+(These APIs are experimental and may change in the future.)
+
+**Arguments**:
+
+- `max_actions_per_step` _int_ - the maximum number of actions that the optimizer can take in one step.
+- `llm_config` _dict_ - llm inference configuration.
+  Please refer to [OpenAIWrapper.create](/docs/reference/oai/client#create) for available options.
+  When using OpenAI or Azure OpenAI endpoints, please specify a non-empty 'model' either in `llm_config` or in each config of 'config_list' in `llm_config`.
+- `optimizer_model` - the model used for the optimizer.
+
+### record\_one\_conversation
+
+```python
+def record_one_conversation(conversation_history: list[dict],
+                            is_satisfied: bool = None)
+```
+
+Record one conversation history.
+
+**Arguments**:
+
+- `conversation_history` _List[Dict]_ - the chat messages of the conversation.
+- `is_satisfied` _bool_ - whether the user is satisfied with the solution. If it is none, the user will be asked to input the satisfaction.
+
+### step
+
+```python
+def step()
+```
+
+One step of training. It will return register_for_llm and register_for_executor at each iteration,
+which are subsequently utilized to update the assistant and executor agents, respectively.
+See example: https://github.com/ag2ai/ag2/blob/main/notebook/agentchat_agentoptimizer.ipynb
+
+### reset\_optimizer
+
+```python
+def reset_optimizer()
+```
+
+Reset the optimizer.
+
