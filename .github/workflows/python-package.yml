@@ -8,11 +8,15 @@ on:
   release:
     types: [published]
   workflow_dispatch: null
-permissions: {}
-  # actions: read
-  # checks: read
-  # contents: read
-  # deployments: read
+# permissions: {}
+#   # actions: read
+#   # checks: read
+#   # contents: read
+#   # deployments: read
+permissions:
+  id-token: write
+  contents: read  # Required for actions/checkout
+
 jobs:
   deploy:
     strategy:
