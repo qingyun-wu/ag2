@@ -17,8 +17,10 @@ jobs:
   deploy:
     strategy:
       matrix:
-        os: ['ubuntu-latest']
-        python-version: ["3.10"]
+          os: ['ubuntu-latest']
+          python-version: ["3.10"]
+          # List all your packages
+          package: ['ag2-core', 'ag2-agents']
     runs-on: ${{ matrix.os }}
     environment: package
     steps:
@@ -31,41 +33,28 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install from source
-        # This is required for the pre-commit tests
+      # - name: Install from source
+      #   # This is required for the pre-commit tests
+      #   shell: pwsh
+      #   run: uv pip install --system -e . wheel "setuptools==58.1.0"
+      - name: Install dependencies
         shell: pwsh
-        run: uv pip install --system -e . wheel "setuptools==58.1.0"
+        run: uv pip install --system -e ./packages/${{ matrix.package }} wheel "setuptools==58.1.0"
       # - name: Conda list
       #   shell: pwsh
       #   run: conda list
-      - name: Build pyautogen
+      # - name: Build ag2-core
+      #   shell: pwsh
+      #   run: |
+      #     pip install build
+      #     python -m build
+      - name: Build package
         shell: pwsh
+        working-directory: ./packages/${{ matrix.package }}
         run: |
-          uv pip install --system twine
-          uv build
-      - name: Publish pyautogen to PyPI
-        env:
-          TWINE_USERNAME: ${{ secrets.PYAUTOGEN_PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYAUTOGEN_PYPI_PASSWORD }}
-        shell: pwsh
-        run: twine upload dist/*pyautogen*
-      - name: Build autogen
-        shell: pwsh
-        run: |
-          python setup_autogen.py sdist bdist_wheel
-      - name: Publish autogen to PyPI
-        env:
-          TWINE_USERNAME: ${{ secrets.AUTOGEN_PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.AUTOGEN_PYPI_PASSWORD }}
-        shell: pwsh
-        run: twine upload dist/autogen*
-      - name: Build ag2
-        shell: pwsh
-        run: |
-          python setup_ag2.py sdist bdist_wheel
-      - name: Publish ag2 to PyPI
-        env:
-          TWINE_USERNAME: ${{ secrets.AUTOGEN_PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.AUTOGEN_PYPI_PASSWORD }}
-        shell: pwsh
-        run: twine upload dist/ag2*
+          pip install build
+          python -m build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/${{ matrix.package }}/dist/
