@@ -654,7 +654,8 @@
             "notebooks/agentchat_tabular_data_rag_workflow",
             "notebooks/agentchat_realtime_webrtc",
             "notebooks/tools_dependency_injection",
-            "notebooks/tools_chat_context_dependency_injection"
+            "notebooks/tools_chat_context_dependency_injection",
+            "notebooks/agentchat_graph_rag_neo4j_native"
           ]
         },
         "notebooks/Gallery"

@@ -59,10 +59,14 @@ Get a formatted string representation of the path from root to this node.
 ### backpropagate
 
 ```python
-def backpropagate(reward: float)
+def backpropagate(reward: float) -> None
 ```
 
 Update the score of this node and its parents using moving average.
+
+**Arguments**:
+
+- `reward` _float_ - The reward to backpropagate up the tree.
 
 ### to\_dict
 
@@ -105,42 +109,47 @@ def visualize_tree(root: ThinkNode) -> None
 
 Visualize the tree of thoughts using graphviz.
 
+**Arguments**:
+
+- `root` _ThinkNode_ - The root node of the tree.
+
 ### extract\_sft\_dataset
 
 ```python
-def extract_sft_dataset(root)
+def extract_sft_dataset(root: ThinkNode) -> list[dict]
 ```
 
-Extract the best trajectory or multiple equally good trajectories
-for SFT training.
+Extract the best trajectory or multiple equally good trajectories for SFT training.
 
 **Arguments**:
 
-- `root` - The root node of the tree.
+- `root` _ThinkNonde_ - The root node of the tree.
   
 
 **Returns**:
 
-  List of best trajectories, where each trajectory is a pair of instruction and response.
+- `List[Dict]` - List of best trajectories, each one is a pair of instruction and response.
 
 ### extract\_rlhf\_preference\_dataset
 
 ```python
-def extract_rlhf_preference_dataset(root, contrastive_threshold=0.2)
+def extract_rlhf_preference_dataset(root: ThinkNode,
+                                    contrastive_threshold: float = 0.2
+                                    ) -> list[dict]
 ```
 
 Extract and generate preference pairs for RLHF training by comparing sibling nodes.
 
 **Arguments**:
 
-- `root` - The root node of the tree.
-- `contrastive_threshold` _float_ - between (0, 1), a distance measure that we are confidence to call
+- `root` _ThinkNode_ - The root node of the tree.
+- `contrastive_threshold` _float_ - between (0, 1), a distance measure that we are confident to call
   one is positive and another is negative.
   
 
 **Returns**:
 
-  A list of preference pairs, where each pair contains two responses and
+- `List[Dict]` - List of preference pairs, where each pair contains two responses and
   indicates which one is preferred.
 
 ## ReasoningAgent
@@ -152,13 +161,13 @@ class ReasoningAgent(AssistantAgent)
 ### \_\_init\_\_
 
 ```python
-def __init__(name,
-             llm_config,
-             grader_llm_config=None,
-             max_depth=4,
-             beam_size=3,
-             answer_approach="pool",
-             verbose=True,
+def __init__(name: str,
+             llm_config: dict,
+             grader_llm_config: Optional[dict] = None,
+             max_depth: int = 4,
+             beam_size: int = 3,
+             answer_approach: str = "pool",
+             verbose: bool = True,
              reason_config: dict = {},
              **kwargs) -> None
 ```
@@ -167,9 +176,9 @@ Initialize a ReasoningAgent that uses tree-of-thought reasoning.
 
 **Arguments**:
 
-- `name` - Name of the agent
-- `llm_config` - Configuration for the language model
-- `grader_llm_config` - Optional separate configuration for the grader model. If not provided, uses llm_config
+- `name` _str_ - Name of the agent
+- `llm_config(dict)` - Configuration for the language model
+- `grader_llm_config(Optional[dict])` - Optional separate configuration for the grader model. If not provided, uses llm_config
 - `max_depth` _int_ - Maximum depth of the reasoning tree
 - `beam_size` _int_ - DEPRECATED. Number of parallel reasoning paths to maintain
 - `answer_approach` _str_ - DEPRECATED. Either "pool" or "best" - how to generate final answer
@@ -203,16 +212,19 @@ Initialize a ReasoningAgent that uses tree-of-thought reasoning.
 ### generate\_forest\_response
 
 ```python
-def generate_forest_response(messages, sender, config=None)
+def generate_forest_response(
+        messages: list[dict],
+        sender: Agent,
+        config: Optional[dict] = None) -> tuple[bool, str]
 ```
 
 Generate a response using tree-of-thought reasoning.
 
 **Arguments**:
 
-- `messages` - Input messages to respond to
-- `sender` - Agent sending the messages
-- `config` - Optional configuration
+- `messages` _List[Dict[str, Any]]_ - Input messages to respond to
+- `sender` _Agent_ - Agent sending the messages
+- `config` _Optional[Dict[str, Any]]_ - Optional configuration
   
 
 **Returns**:
@@ -232,6 +244,7 @@ Rate the quality of a reasoning path using the grader agent.
 **Arguments**:
 
 - `node` _ThinkNode_ - Node containing the reasoning trajectory to evaluate
+- `ground_truth` _str_ - Optional ground truth to provide to the grader
 - `is_outcome` _bool_ - indicates whether the rating is for an outcome (final answer) or a process (thinking trajectory).
   
 
