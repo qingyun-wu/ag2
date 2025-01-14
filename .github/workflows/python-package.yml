@@ -17,10 +17,10 @@ jobs:
   deploy:
     strategy:
       matrix:
-          os: ['ubuntu-latest']
-          python-version: ["3.10"]
-          # List all your packages
-          package: ['ag2-core', 'ag2-agents']
+        os: ['ubuntu-latest']
+        python-version: ["3.10"]
+        # List all your packages
+        package: ['ag2-core', 'ag2-agents']
     runs-on: ${{ matrix.os }}
     environment: package
     steps:
